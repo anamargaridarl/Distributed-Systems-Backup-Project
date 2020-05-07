@@ -3,10 +3,8 @@ package base.Tasks;
 import static base.Clauses.STORED;
 
 import base.TaskLogger;
-import base.channels.ChannelManager;
 import base.messages.MessageChunkNo;
 
-import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
 
 public class ManageStored implements Runnable {

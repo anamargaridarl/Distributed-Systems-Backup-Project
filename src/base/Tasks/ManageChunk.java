@@ -1,17 +1,11 @@
 package base.Tasks;
 
-import base.Peer;
 import base.TaskLogger;
-import base.channels.ChannelManager;
-import base.messages.MessageChunkNo;
 import base.messages.RestoreMessage;
 
-import javax.imageio.IIOException;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Random;
 
 import static base.Clauses.CHUNK;
 import static base.Clauses.ENHANCED_VERSION;

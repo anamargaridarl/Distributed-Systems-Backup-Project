@@ -1,10 +1,8 @@
 package base.Tasks;
 
 import base.TaskLogger;
-import base.channels.ChannelManager;
 import base.messages.MessageChunkNo;
 
-import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
 
 public class ManageRemoveChunk implements Runnable {

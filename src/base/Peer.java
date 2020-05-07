@@ -3,11 +3,6 @@ package base;
 
 import base.Storage.StorageManager;
 import base.Tasks.*;
-import base.channels.BackupChannel;
-import base.channels.ChannelManager;
-import base.channels.ControlChannel;
-import base.channels.RestoreChannel;
-import base.messages.Message;
 
 import java.io.*;
 import java.rmi.RemoteException;
@@ -27,15 +22,12 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     private static String version;
     private static int peer_id;
     private static StorageManager storage_manager;
-    private static ChannelManager channel_manager;
     private static ScheduledThreadPoolExecutor task_manager;
 
     Peer(String protocol_vs, int s_id, String mc_addr, String mdb_addr, String mdr_addr, int mc_port, int mdb_port, int mdr_port) throws IOException {
         version = protocol_vs;
         peer_id = s_id;
-        channel_manager = new ChannelManager();
         storage_manager = StorageManager.loadStorageManager();
-        channel_manager.setChannels(createControl(mc_addr, mc_port), createBackup(mdb_addr, mdb_port), createRestore(mdr_addr, mdr_port));
         task_manager = new ScheduledThreadPoolExecutor(10);
         task_manager.scheduleAtFixedRate(new SaveState(), SAVE_PERIOD, SAVE_PERIOD, TimeUnit.MILLISECONDS);
         addShutdownHook();
@@ -65,25 +57,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
 
     public static StorageManager getStorageManager() {
         return storage_manager;
-    }
-
-    public BackupChannel createBackup(String mdb_addr, int mdb_port) throws IOException {
-        BackupChannel bck_channel = new BackupChannel(mdb_addr, mdb_port);
-        new Thread(bck_channel).start();
-        return bck_channel;
-    }
-
-    public ControlChannel createControl(String mc_addr, int mc_port) throws IOException {
-        ControlChannel cnt_channel = new ControlChannel(mc_addr, mc_port);
-        new Thread(cnt_channel).start();
-        return cnt_channel;
-    }
-
-    public RestoreChannel createRestore(String mdr_addr, int mdr_port) throws IOException {
-        RestoreChannel rst_channel = new RestoreChannel(mdr_addr, mdr_port);
-        new Thread(rst_channel).start();
-        return rst_channel;
-
     }
 
     @Override

@@ -3,15 +3,14 @@ package base.Tasks;
 import static base.Clauses.MAX_RETRIES;
 import static base.Clauses.PUTCHUNK;
 
+import base.Clauses;
 import base.FailedPutChunk;
 import base.Peer;
 import base.TaskLogger;
-import base.TestApp;
-import base.channels.ChannelManager;
 import base.messages.BackupMessage;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
 /*
@@ -36,12 +35,17 @@ public class ManagePutChunk implements Runnable {
         }
     }
 
-    public void processMessage() throws FailedPutChunk, IOException {
+    public void processMessage() throws FailedPutChunk, IOException, NoSuchAlgorithmException {
         int curr_rep_degree = Peer.getStorageManager().getStoredSendersOccurrences(bk_message.getFileId(), bk_message.getNumber());
         if (curr_rep_degree < bk_message.getReplicationDeg()) {
 
             if (n_try < MAX_RETRIES) {
-                ChannelManager.getBckChannel().sendMessage(bk_message.createByteMessage());
+                String hash_chunk = Clauses.hashChunk(bk_message.getFileId(),bk_message.getNumber());
+                //send to correct peer
+                double peer = Clauses.alocatePeer(hash_chunk);
+                //send to peer
+                f
+
                 Peer.getStorageManager().addStoredChunkRequest(bk_message.getFileId(), bk_message.getNumber());
                 Peer.getTaskManager().schedule(this, (long) (1000 * Math.pow(2, n_try)), TimeUnit.MILLISECONDS);
                 n_try++;

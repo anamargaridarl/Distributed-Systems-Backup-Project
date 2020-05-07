@@ -1,14 +1,11 @@
 package base.Tasks;
 
 import base.TaskLogger;
-import base.channels.ChannelManager;
 import base.messages.BaseMessage;
-import base.messages.MessageChunkNo;
 
 import java.net.UnknownHostException;
 
 import static base.Clauses.ASKDELETE;
-import static base.Clauses.STORED;
 
 public class ManageDeleteOffline implements Runnable {
 

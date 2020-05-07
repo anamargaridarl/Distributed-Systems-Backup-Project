@@ -2,10 +2,8 @@ package base.Tasks;
 
 import base.Peer;
 import base.TaskLogger;
-import base.channels.ChannelManager;
 import base.messages.Message;
 
-import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
 
 import static base.Clauses.DELETE;

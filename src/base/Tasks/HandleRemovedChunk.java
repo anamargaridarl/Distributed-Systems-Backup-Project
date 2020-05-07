@@ -2,12 +2,10 @@ package base.Tasks;
 
 import base.Peer;
 import base.TaskLogger;
-import base.channels.ChannelManager;
 import base.messages.MessageChunkNo;
 
 import java.io.IOException;
 import java.util.Random;
-import java.util.TreeSet;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 

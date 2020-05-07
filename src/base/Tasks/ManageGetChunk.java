@@ -1,15 +1,11 @@
 package base.Tasks;
 
 import base.TaskLogger;
-import base.channels.ChannelManager;
-import base.messages.BackupMessage;
 import base.messages.MessageChunkNo;
 
-import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
 
 import static base.Clauses.GETCHUNK;
-import static base.Clauses.PUTCHUNK;
 
 /*
     Class that manages restore requests as initiator peer
