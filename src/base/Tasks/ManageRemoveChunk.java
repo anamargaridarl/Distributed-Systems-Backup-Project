@@ -23,6 +23,7 @@ public class ManageRemoveChunk implements Runnable {
     }
 
     private void processMessage() throws UnknownHostException {
-        ChannelManager.getCntrChannel().sendMessage(rmv_message.createMessageFinal().getBytes());
+        //TODO: send to client channel
+        //ChannelManager.getCntrChannel().sendMessage(rmv_message.createMessageFinal().getBytes());
     }
 }

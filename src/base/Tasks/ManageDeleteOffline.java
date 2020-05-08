@@ -25,6 +25,7 @@ public class ManageDeleteOffline implements Runnable {
     }
 
     public void processMessage() throws UnknownHostException {
-        ChannelManager.getCntrChannel().sendMessage(delete_message.createMessageFinal().getBytes());
+        //TODO: send to client channel
+        //ChannelManager.getCntrChannel().sendMessage(delete_message.createMessageFinal().getBytes());
     }
 }

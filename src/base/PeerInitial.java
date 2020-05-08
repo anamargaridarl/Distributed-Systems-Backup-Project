@@ -18,13 +18,7 @@ public class PeerInitial {
     static Registry registry;
     static String remote_name;
 
-    static String mc_addr;
-    static String mdb_addr;
-    static String mdr_addr;
-
-    static int mc_port;
-    static int mdb_port;
-    static int mdr_port;
+    static int port;
 
     static Peer obj;
 
@@ -42,15 +36,9 @@ public class PeerInitial {
         protocol_vs = args[0];
         s_id = Integer.parseInt(args[1]);
         remote_name = args[2];
-        mc_addr = args[3];
-        mdb_addr = args[4];
-        mdr_addr = args[5];
+        port = Integer.parseInt(args[3]);
 
-        mc_port = Integer.parseInt(args[6]);
-        mdb_port = Integer.parseInt(args[7]);
-        mdr_port = Integer.parseInt(args[8]);
-
-        obj = new Peer(protocol_vs, s_id, mc_addr, mdb_addr, mdr_addr, mc_port, mdb_port, mdr_port);
+        obj = new Peer(protocol_vs, s_id, port);
 
         open();
 

@@ -18,7 +18,8 @@ public class ManageDeleteFile implements Runnable {
     }
 
     public void processMessage() throws UnknownHostException {
-        ChannelManager.getCntrChannel().sendMessage(msg_delete.createMessageFinal().getBytes());
+        //TODO: send to client channel
+        //ChannelManager.getCntrChannel().sendMessage(msg_delete.createMessageFinal().getBytes());
     }
 
     public void run() {

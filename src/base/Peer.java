@@ -3,6 +3,7 @@ package base;
 
 import base.Storage.StorageManager;
 import base.Tasks.*;
+import base.channel.ServerThread;
 
 import java.io.*;
 import java.rmi.RemoteException;
@@ -24,12 +25,13 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     private static StorageManager storage_manager;
     private static ScheduledThreadPoolExecutor task_manager;
 
-    Peer(String protocol_vs, int s_id, String mc_addr, String mdb_addr, String mdr_addr, int mc_port, int mdb_port, int mdr_port) throws IOException {
+    Peer(String protocol_vs, int s_id, int port) throws IOException {
         version = protocol_vs;
         peer_id = s_id;
         storage_manager = StorageManager.loadStorageManager();
         task_manager = new ScheduledThreadPoolExecutor(10);
         task_manager.scheduleAtFixedRate(new SaveState(), SAVE_PERIOD, SAVE_PERIOD, TimeUnit.MILLISECONDS);
+        task_manager.execute(new ServerThread(port));
         addShutdownHook();
         askforDeleteRequests();
     }

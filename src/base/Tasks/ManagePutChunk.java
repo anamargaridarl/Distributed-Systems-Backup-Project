@@ -44,7 +44,7 @@ public class ManagePutChunk implements Runnable {
                 //send to correct peer
                 double peer = Clauses.alocatePeer(hash_chunk);
                 //send to peer
-                f
+                
 
                 Peer.getStorageManager().addStoredChunkRequest(bk_message.getFileId(), bk_message.getNumber());
                 Peer.getTaskManager().schedule(this, (long) (1000 * Math.pow(2, n_try)), TimeUnit.MILLISECONDS);

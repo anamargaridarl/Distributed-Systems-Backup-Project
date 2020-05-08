@@ -19,7 +19,8 @@ public class ManageGetChunk implements Runnable {
     }
 
     public void processMessage() throws UnknownHostException {
-        ChannelManager.getCntrChannel().sendMessage(getchunk_message.createMessageFinal().getBytes());
+        //TODO: send to client channel
+        //ChannelManager.getCntrChannel().sendMessage(getchunk_message.createMessageFinal().getBytes());
     }
 
     @Override

@@ -24,7 +24,8 @@ public class ManageChunk implements Runnable {
     public void sendModifiedChunk() {
         try {
             byte[] request = restore_message.createByteModifiedMessage(port);
-            ChannelManager.getRstrChannel().sendMessage(request);
+            //TODO: send to client channel
+            //ChannelManager.getRstrChannel().sendMessage(request);
         } catch (IOException e) {
             TaskLogger.sendMessageFail();
         }
@@ -67,11 +68,8 @@ public class ManageChunk implements Runnable {
             acceptClientSocket();
             sendTCPChunk();
         } else {
-            try {
-                ChannelManager.getRstrChannel().sendMessage(restore_message.createByteMessage());
-            } catch (IOException e) {
-                TaskLogger.sendMessageFail();
-            }
+            //TODO: send to client channel
+            //ChannelManager.getRstrChannel().sendMessage(restore_message.createByteMessage());
         }
 
     }

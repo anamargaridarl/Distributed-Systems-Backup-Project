@@ -43,7 +43,8 @@ public class HandleRemovedChunk implements Runnable {
                     new Random().nextInt(MAX_DELAY_STORED),
                     TimeUnit.MILLISECONDS
             );
-            ChannelManager.getBckChannel().registerPutChunkMessage(rm_file_id, rm_chunk_n, pending);
+            //TODO: send to client channel
+            //ChannelManager.getBckChannel().registerPutChunkMessage(rm_file_id, rm_chunk_n, pending);
         }
     }
 }
