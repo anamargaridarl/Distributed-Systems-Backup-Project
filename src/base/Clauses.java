@@ -3,6 +3,9 @@ package base;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Clauses {
 
@@ -54,4 +57,24 @@ public class Clauses {
         return Integer.parseInt(hash) % Math.pow(2,m);
     }
 
+  public static List<byte[]> separateHeaderAndBody(byte[] message) {
+      int i = 0;
+      for (; i < message.length - 4; i++) { //check the message where the <CRLF><CRLF> are located
+          if (message[i] == CR && message[i + 1] == LF && message[i + 2] == CR && message[i + 3] == LF)
+              break;
+      }
+      if (i == message.length - 4) {
+          return null;
+      }
+      List<byte[]> newList = new ArrayList<>();
+      byte[] header = Arrays.copyOfRange(message, 0, i);
+      byte[] body = Arrays.copyOfRange(message, i + 4, message.length);
+      newList.add(header);
+      newList.add(body);
+      return newList;
+  }
+
+  public static String[] parseHeader(byte[] header) {
+      return new String(header, 0, header.length).split("\\s+");
+  }
 }

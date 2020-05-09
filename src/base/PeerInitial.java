@@ -23,8 +23,8 @@ public class PeerInitial {
     static Peer obj;
 
     public static void main(String[] args) throws IOException {
-        if (args.length != 9) {
-            System.out.println("Invalid arguments. Please use: java PeerInitial <version> <peer_id> <remote_name> <mc_addr> <mdb_addr> <mdr_addr> <mc_port> <mdb_port> <mdr_port>");
+        if (args.length != 4) {
+            System.out.println("Invalid arguments. Please use: java PeerInitial <version> <peer_id> <remote_name> <port>");
             System.exit(1);
         }
 

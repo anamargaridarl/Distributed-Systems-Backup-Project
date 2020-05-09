@@ -2,6 +2,8 @@ package base.channel;
 
 import base.AlreadyRegistered;
 import base.NoAddress;
+import base.Peer;
+import base.Tasks.HandleClientRequest;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,17 +17,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ServerThread implements Runnable {
-  DatagramSocket socket;
   Map<String, String> dns_db;
-  DatagramPacket packet_res;
-  DatagramPacket packet_req;
   ServerSocket server_socket;
   int serverPort;
 
   public ServerThread(int port) throws IOException {
     serverPort = port;
     server_socket = new ServerSocket(serverPort);
-    dns_db = new HashMap<String, String>();
+    dns_db = new HashMap<String, String>(); //TODO: replace with DHT
   }
 
   @Override
@@ -33,15 +32,7 @@ public class ServerThread implements Runnable {
     while (true) {
       try {
         Socket client = server_socket.accept();
-        PrintWriter out = new PrintWriter(client.getOutputStream(), true);
-        BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-        String inputLine, outputLine;
-
-        inputLine = in.readLine();
-        if (inputLine != null) {
-          outputLine = processPacket(inputLine);
-          out.println(outputLine);
-        }
+        Peer.getTaskManager().execute(new HandleClientRequest(client));
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -49,30 +40,7 @@ public class ServerThread implements Runnable {
     }
   }
 
-  private String processPacket(String request) {
-    String[] args = request.split(" ");
-    String response = "-1";
-    logRequest(args);
-
-    if (args[0].equalsIgnoreCase("REGISTER")) {
-      try {
-        int value = registerAddress(args[1], args[2]);
-        return Integer.toString(value);
-      } catch (AlreadyRegistered alreadyRegistered) {
-        return response;
-      }
-    } else if (args[0].equalsIgnoreCase("LOOKUP")) {
-      try {
-        return lookupAddress(args[1]);
-      } catch (NoAddress noAddress) {
-        return response;
-      }
-    }
-
-    return response;
-  }
-
-  private void logRequest(String[] args) {
+  /*private void logRequest(String[] args) {
     System.out.print("Server:");
     for (String arg : args) {
       System.out.print(" " + arg);
@@ -100,5 +68,5 @@ public class ServerThread implements Runnable {
 
     return response;
 
-  }
+  }*/
 }

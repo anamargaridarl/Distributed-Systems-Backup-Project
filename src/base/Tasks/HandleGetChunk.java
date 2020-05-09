@@ -6,6 +6,7 @@ import base.TaskLogger;
 import base.messages.MessageChunkNo;
 
 import java.io.*;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -17,10 +18,12 @@ import static base.Clauses.MAX_DELAY_STORED;
  */
 public class HandleGetChunk implements Runnable {
 
-    MessageChunkNo getchunk_message;
+    private MessageChunkNo getchunk_message;
+    private Socket client_socket;
 
-    public HandleGetChunk(String[] message) {
+    public HandleGetChunk(String[] message, Socket client_socket) {
         getchunk_message = new MessageChunkNo(message);
+        this.client_socket = client_socket;
     }
 
     @Override
@@ -37,6 +40,7 @@ public class HandleGetChunk implements Runnable {
 
             Random random = new Random();
             int time_wait = random.nextInt(MAX_DELAY_STORED);
+            //TODO: add socket to manageChunk
             Peer.getTaskManager().schedule(new ManageChunk(getchunk_message.getVersion(), Peer.getID(), getchunk_message.getFileId(), getchunk_message.getNumber(), body)
                     , time_wait, TimeUnit.MILLISECONDS);
         }

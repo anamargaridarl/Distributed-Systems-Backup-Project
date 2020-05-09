@@ -10,10 +10,12 @@ import java.net.UnknownHostException;
 
 public class ManageStored implements Runnable {
 
-    MessageChunkNo st_message;
+    private MessageChunkNo st_message;
+    private Socket client_socket;
 
     public ManageStored(String v, int sid, String fid, int chunkno, Socket socket) {
         st_message = new MessageChunkNo(v, STORED, sid, fid, chunkno);
+        client_socket = socket;
     }
 
     @Override
@@ -26,7 +28,7 @@ public class ManageStored implements Runnable {
     }
 
     public void processMessage() throws UnknownHostException {
-        //TODO: send to client channel
+        //TODO: send to socket
         //ChannelManager.getCntrChannel().sendMessage(st_message.createMessageFinal().getBytes());
     }
 }

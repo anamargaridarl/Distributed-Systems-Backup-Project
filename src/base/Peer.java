@@ -22,16 +22,18 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     //add methods to access storage and save/load data
     private static String version;
     private static int peer_id;
+    private static int server_port;
     private static StorageManager storage_manager;
     private static ScheduledThreadPoolExecutor task_manager;
 
     Peer(String protocol_vs, int s_id, int port) throws IOException {
         version = protocol_vs;
         peer_id = s_id;
+        server_port = port;
         storage_manager = StorageManager.loadStorageManager();
         task_manager = new ScheduledThreadPoolExecutor(10);
         task_manager.scheduleAtFixedRate(new SaveState(), SAVE_PERIOD, SAVE_PERIOD, TimeUnit.MILLISECONDS);
-        task_manager.execute(new ServerThread(port));
+        task_manager.execute(new ServerThread(server_port));
         addShutdownHook();
         askforDeleteRequests();
     }
