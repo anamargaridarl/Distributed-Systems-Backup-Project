@@ -36,6 +36,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         task_manager.execute(new MessageListener(server_port));
         addShutdownHook();
         askforDeleteRequests();
+        Clauses.addElements();
     }
 
     private void askforDeleteRequests() {

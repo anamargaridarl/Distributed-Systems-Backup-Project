@@ -2,12 +2,14 @@ package base;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.List;
 
 public class Clauses {
@@ -32,6 +34,18 @@ public class Clauses {
     public static final int SAVE_PERIOD = 30000; // in milliseconds
     public static final int TIMEOUT = 1000;
     public static final Integer m = 8;
+    public static final Hashtable<String, InetSocketAddress> chord = new Hashtable<>();
+
+    public static void addElements()
+    {
+        InetSocketAddress obj0 = new InetSocketAddress("localhost",5000);
+        InetSocketAddress obj1 = new InetSocketAddress("localhost",5001);
+        InetSocketAddress obj2 = new InetSocketAddress("localhost",5002);
+
+        chord.put("0",obj0);
+        chord.put("1",obj1);
+        chord.put("2",obj2);
+    }
 
     public static String makeChunkRef(String file_id, int number) {
         return file_id + ":" + number;
@@ -43,7 +57,7 @@ public class Clauses {
 
     public static String hashChunk(String file_id, int peer_id) throws NoSuchAlgorithmException {
         String chunkid = makeChunkRef(file_id,peer_id);
-        MessageDigest md = MessageDigest.getInstance("SHA-1");
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
         byte[] digest = md.digest(chunkid.getBytes(StandardCharsets.UTF_8));
         return bytesToHex(digest);
     }
