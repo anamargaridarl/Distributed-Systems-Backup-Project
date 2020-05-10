@@ -1,5 +1,8 @@
 package base;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -28,7 +31,7 @@ public class Clauses {
     public static final int MAX_RETRIES = 5;
     public static final int SAVE_PERIOD = 30000; // in milliseconds
     public static final int TIMEOUT = 1000;
-    public static final Integer m = 1000; //change to real value
+    public static final Integer m = 8;
 
     public static String makeChunkRef(String file_id, int number) {
         return file_id + ":" + number;
@@ -77,4 +80,6 @@ public class Clauses {
   public static String[] parseHeader(byte[] header) {
       return new String(header, 0, header.length).split("\\s+");
   }
+
+  public static Socket createSocket(InetAddress host, int port) throws IOException { return new Socket(host,port);}
 }

@@ -4,24 +4,27 @@ import base.Peer;
 import base.TaskLogger;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
 import static base.Clauses.MAX_DELAY_STORED;
 
 public class HandleInitiatorChunks implements Runnable {
 
+    private final Socket client_socket;
     private int i;
     private String version;
     private String file_id;
     private Integer peer_id;
     private String filename;
 
-    public HandleInitiatorChunks(int i, String version, String file_id, Integer peer_id, String filename) {
+    public HandleInitiatorChunks(int i, String version, String file_id, Integer peer_id, String filename, Socket client_socket) {
         this.version = version;
         this.file_id = file_id;
         this.peer_id = peer_id;
         this.i = i;
         this.filename = filename;
+        this.client_socket = client_socket;
     }
 
     @Override
@@ -42,8 +45,10 @@ public class HandleInitiatorChunks implements Runnable {
             return;
         }
 
-        ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i);
-        Peer.getTaskManager().execute(manage_getchunk);
-        Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), MAX_DELAY_STORED, TimeUnit.MILLISECONDS);
+        //TODO: use CHORD to get peer holding the chunk and create socket
+        //ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i);
+        //Peer.getTaskManager().execute(manage_getchunk);
+        //TODO: and pass the new socket to the task
+        //Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), MAX_DELAY_STORED, TimeUnit.MILLISECONDS);
     }
 }

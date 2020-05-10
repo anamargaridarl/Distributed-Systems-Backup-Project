@@ -1,9 +1,6 @@
 package base.Tasks;
 
-import base.TaskLogger;
 import base.messages.MessageChunkNo;
-
-import java.net.UnknownHostException;
 
 public class ManageRemoveChunk implements Runnable {
 
@@ -13,17 +10,13 @@ public class ManageRemoveChunk implements Runnable {
         rmv_message = new MessageChunkNo(v, type, sid, fid, number);
     }
 
+    //TODO: get info about who to send removed message
     @Override
     public void run() {
-        try {
-            processMessage();
+        /*try {
+            //Peer.getTaskManager().execute(new Client());
         } catch (UnknownHostException e) {
             TaskLogger.sendMessageFail();
-        }
-    }
-
-    private void processMessage() throws UnknownHostException {
-        //TODO: send to client channel
-        //ChannelManager.getCntrChannel().sendMessage(rmv_message.createMessageFinal().getBytes());
+        }*/
     }
 }

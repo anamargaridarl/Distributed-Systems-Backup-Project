@@ -61,7 +61,6 @@ public class HandleReceivedManager implements Runnable {
       }
     } catch (NumberFormatException e) {
       TaskLogger.invalidSenderID(msg_header[2]);
-      return;
     } catch (IOException e) {
       e.printStackTrace(); //log error
     }
@@ -81,7 +80,7 @@ public class HandleReceivedManager implements Runnable {
   }
 
   private void handleChunk() {
-    Peer.getTaskManager().execute(new HandleChunk(msg_header, msg_body, client_socket));
+    Peer.getTaskManager().execute(new HandleChunk(msg_header, msg_body));
   }
 
   private void handleDeleteFile() {

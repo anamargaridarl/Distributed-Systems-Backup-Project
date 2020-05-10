@@ -34,5 +34,13 @@ public class Message extends BaseMessage {
         return response;
     }
 
+    @Override
+    public byte[] toByteArray() {
+        return this.createMessage().getBytes();
+    }
 
+    @Override
+    public byte[] toByteArrayFinal() {
+        return this.createMessageFinal().getBytes();
+    }
 }

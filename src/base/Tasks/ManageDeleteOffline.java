@@ -1,5 +1,6 @@
 package base.Tasks;
 
+import base.Peer;
 import base.TaskLogger;
 import base.messages.BaseMessage;
 
@@ -25,7 +26,6 @@ public class ManageDeleteOffline implements Runnable {
     }
 
     public void processMessage() throws UnknownHostException {
-        //TODO: send to client channel
-        //ChannelManager.getCntrChannel().sendMessage(delete_message.createMessageFinal().getBytes());
+        //TODO: decide who to contact, obtain socket and send message
     }
 }

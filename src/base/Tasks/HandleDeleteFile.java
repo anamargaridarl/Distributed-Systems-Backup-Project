@@ -16,6 +16,5 @@ public class HandleDeleteFile implements Runnable {
     @Override
     public void run() {
         Peer.getStorageManager().deleteChunks(msg_delete.getFileId());
-        return;
     }
 }

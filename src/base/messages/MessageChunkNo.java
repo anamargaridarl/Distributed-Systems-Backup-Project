@@ -29,7 +29,7 @@ public class MessageChunkNo extends Message {
     }
 
     public String createMessageFinal() {
-        String super_msg = super.createMessage() + " " + this.number + " " + Clauses.CRLF + Clauses.CRLF;
+        String super_msg = super.createMessage() + " " + this.number + Clauses.CRLF + Clauses.CRLF;
         return super_msg;
     }
 
@@ -40,5 +40,13 @@ public class MessageChunkNo extends Message {
         return response;
     }
 
+    @Override
+    public byte[] toByteArray() {
+        return this.createMessage().getBytes();
+    }
 
+    @Override
+    public byte[] toByteArrayFinal() {
+        return this.createMessageFinal().getBytes();
+    }
 }

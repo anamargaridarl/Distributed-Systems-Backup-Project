@@ -18,7 +18,7 @@ import static base.Clauses.MAX_DELAY_STORED;
  */
 public class HandleGetChunk implements Runnable {
 
-    private MessageChunkNo getchunk_message;
+    private final MessageChunkNo getchunk_message;
     private Socket client_socket;
 
     public HandleGetChunk(String[] message, Socket client_socket) {
@@ -30,7 +30,7 @@ public class HandleGetChunk implements Runnable {
     public void run() {
 
         if (Peer.getStorageManager().existsChunkRestore(getchunk_message.getFileId(), getchunk_message.getNumber())) {
-            byte[] body = new byte[0];
+            byte[] body;
             try {
                 body = Peer.getStorageManager().getChunkData(getchunk_message.getFileId(), getchunk_message.getNumber());
             } catch (IOException e) {
@@ -40,8 +40,7 @@ public class HandleGetChunk implements Runnable {
 
             Random random = new Random();
             int time_wait = random.nextInt(MAX_DELAY_STORED);
-            //TODO: add socket to manageChunk
-            Peer.getTaskManager().schedule(new ManageChunk(getchunk_message.getVersion(), Peer.getID(), getchunk_message.getFileId(), getchunk_message.getNumber(), body)
+            Peer.getTaskManager().schedule(new ManageChunk(getchunk_message.getVersion(), Peer.getID(), getchunk_message.getFileId(), getchunk_message.getNumber(), body, client_socket)
                     , time_wait, TimeUnit.MILLISECONDS);
         }
     }

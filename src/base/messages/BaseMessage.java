@@ -46,4 +46,12 @@ public class BaseMessage {
         return response;
     }
 
+    public byte[] toByteArray() {
+        return this.createMessage().getBytes();
+    }
+
+    public byte[] toByteArrayFinal() {
+        return this.createMessageFinal().getBytes();
+    }
+
 }

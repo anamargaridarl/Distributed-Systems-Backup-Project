@@ -5,11 +5,6 @@ import base.TaskLogger;
 import base.messages.MessageChunkNo;
 
 import java.io.IOException;
-import java.util.Random;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import static base.Clauses.MAX_DELAY_STORED;
 
 /* Class that handles chunk removal task (to be concurrent)
  * check if the peer has the specific chunk and retrieve its desired replication degree
@@ -38,13 +33,12 @@ public class HandleRemovedChunk implements Runnable {
             } catch (IOException e) {
                 TaskLogger.getChunkRetrieveFail();
             }
-            ScheduledFuture<?> pending = Peer.getTaskManager().schedule(
-                    new ManagePutChunk(Peer.getVersion(), Peer.getID(), rm_file_id, rm_chunk_n, desired_rep_deg, chunk_data),
-                    new Random().nextInt(MAX_DELAY_STORED),
-                    TimeUnit.MILLISECONDS
-            );
-            //TODO: send to client channel
-            //ChannelManager.getBckChannel().registerPutChunkMessage(rm_file_id, rm_chunk_n, pending);
+//            ScheduledFuture<?> pending = Peer.getTaskManager().schedule(
+//                    new ManagePutChunk(Peer.getVersion(), Peer.getID(), rm_file_id, rm_chunk_n, desired_rep_deg, chunk_data),
+//                    new Random().nextInt(MAX_DELAY_STORED),
+//                    TimeUnit.MILLISECONDS
+//            );
+            //TODO: get host info about peers that store the chunk and send the message to each one of them
         }
     }
 }

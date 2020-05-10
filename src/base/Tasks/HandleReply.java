@@ -9,10 +9,10 @@ import java.util.List;
 
 import static base.Clauses.MAX_SIZE;
 
-public class HandleClientRequest implements Runnable {
-  private Socket client_socket;
+public class HandleReply implements Runnable {
+  private final Socket client_socket;
 
-  public HandleClientRequest(Socket c_socket) {
+  public HandleReply(Socket c_socket) {
     client_socket = c_socket;
   }
 

@@ -39,7 +39,7 @@ public class BackupMessage extends MessageChunkNo {
 
     public byte[] createByteMessage() throws IOException {
         byte[] response;
-        String super_msg = super.createMessage() + " " + replicationDeg + " " + Clauses.CRLF + Clauses.CRLF;
+        String super_msg = super.createMessage() + " " + replicationDeg + Clauses.CRLF + Clauses.CRLF;
         response = super_msg.getBytes();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write(response);

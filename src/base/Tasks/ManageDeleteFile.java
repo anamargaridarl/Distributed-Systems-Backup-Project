@@ -2,8 +2,10 @@ package base.Tasks;
 
 import base.Peer;
 import base.TaskLogger;
+import base.channel.MessageSender;
 import base.messages.Message;
 
+import java.net.Socket;
 import java.net.UnknownHostException;
 
 import static base.Clauses.DELETE;
@@ -11,15 +13,15 @@ import static base.Clauses.ENHANCED_VERSION;
 
 public class ManageDeleteFile implements Runnable {
 
-    Message msg_delete;
-
-    public ManageDeleteFile(String version, int peer_id, String file_id) {
+    private final Message msg_delete;
+    private final Socket client_socket;
+    public ManageDeleteFile(String version, int peer_id, String file_id, Socket c_socket) {
         msg_delete = new Message(version, DELETE, peer_id, file_id);
+        client_socket = c_socket;
     }
 
     public void processMessage() throws UnknownHostException {
-        //TODO: send to client channel
-        //ChannelManager.getCntrChannel().sendMessage(msg_delete.createMessageFinal().getBytes());
+        Peer.getTaskManager().execute(new MessageSender(client_socket,msg_delete.toByteArrayFinal()));
     }
 
     public void run() {
@@ -31,6 +33,4 @@ public class ManageDeleteFile implements Runnable {
             TaskLogger.sendMessageFail();
         }
     }
-
-
 }
