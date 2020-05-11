@@ -76,6 +76,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         Integer hashKey = getHashKey(hash);
         Integer peerID = allocatePeer(hashKey);
         InetSocketAddress peerHost = chord.get(peerID);
+        System.out.println(peerHost);
         return createSocket(peerHost);
     }
 
@@ -94,7 +95,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             byte[][] chunks = file_information.splitIntoChunk();
             file_information.setNumberChunks(chunks.length);
             Peer.getStorageManager().addFileInfo(file_information);
-            for (int i = 1; i <= chunks.length; i++) {
+            for (int i = 0; i < chunks.length; i++) {
                 //TODO: use CHORD to lookup peers addresses and create sockets
                 Socket taskSocket = getChunkSocket(file_information.getFileId(), i);
                 ManagePutChunk manage_putchunk = new ManagePutChunk(version, peer_id, file_information.getFileId(), i, rep_deg, chunks.length, chunks[i], taskSocket);
@@ -167,19 +168,18 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
 
         //TODO: use CHORD to lookup peers that have the chunk and create sockets
         try {
-            Socket taskSocket = getChunkSocket(file_id, 1);
-            ManageDeleteFile first_manage_delete = new ManageDeleteFile(version, peer_id, file_id, taskSocket);
+            Socket taskSocket = getChunkSocket(file_id, 0);
+            ManageDeleteFile first_manage_delete = new ManageDeleteFile(version, peer_id, file_id,0, taskSocket);
             getTaskManager().execute(first_manage_delete); //TODO: verify correctness in this new implementation
-            for (int i = 2; i <= deletechunks; i++) {
-                ManageDeleteFile manage_delete = new ManageDeleteFile(version, peer_id, file_id, taskSocket);
+            /*for (int i = 1; i < deletechunks; i++) {
+                ManageDeleteFile manage_delete = new ManageDeleteFile(version, peer_id, file_id, i ,taskSocket);
                 getTaskManager().execute(manage_delete); //TODO: verify correctness in this new implementation
-            }
+            }*/
         } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
             noSuchAlgorithmException.printStackTrace();
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
-
         return 0;
     }
 

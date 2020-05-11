@@ -21,8 +21,9 @@ public class HandleDeleteFile implements Runnable {
 
     @Override
     public void run() {
-        if(msg_delete.getNumber() == 1)
-            Peer.getTaskManager().execute(new ManageDeleteReply(msg_delete.getVersion(),Peer.getStorageManager().getNumChunk(msg_delete.getFileId(),msg_delete.getNumber()),clientsocket));
-       Peer.getStorageManager().deleteChunks(msg_delete.getFileId(), msg_delete.getNumber());
+        if(msg_delete.getNumber() == 0) {
+            Peer.getTaskManager().execute(new ManageDeleteReply(msg_delete.getVersion(), Peer.getStorageManager().getNumChunk(msg_delete.getFileId(), msg_delete.getNumber()), clientsocket));
+        }
+        Peer.getStorageManager().deleteChunks(msg_delete.getFileId(), msg_delete.getNumber());
     }
 }
