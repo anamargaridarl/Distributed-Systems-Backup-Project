@@ -109,7 +109,7 @@ public class Clauses {
       return Peer.getID() != 1 ? 0 : 40;
   }
 
-  public static List<byte[]> separateHeaderAndBody(byte[] message) {
+  public static List<byte[]> separateHeaderAndBody(byte[] message, int fullSize) {
     int i = 0;
     for (; i < message.length - 4; i++) { //check the message where the <CRLF><CRLF> are located
       if (message[i] == CR && message[i + 1] == LF && message[i + 2] == CR && message[i + 3] == LF)
@@ -120,7 +120,7 @@ public class Clauses {
     }
     List<byte[]> newList = new ArrayList<>();
     byte[] header = Arrays.copyOfRange(message, 0, i);
-    byte[] body = Arrays.copyOfRange(message, i + 4, message.length);
+    byte[] body = Arrays.copyOfRange(message, i + 4, fullSize);
     newList.add(header);
     newList.add(body);
     return newList;

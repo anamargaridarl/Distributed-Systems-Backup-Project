@@ -44,6 +44,7 @@ public class ManagePutChunk implements Runnable {
             if (n_try < MAX_RETRIES) {
                 Peer.getTaskManager().execute(new MessageSender(client_socket,bk_message.createByteMessage()));
                 Peer.getStorageManager().addStoredChunkRequest(bk_message.getFileId(), bk_message.getNumber());
+                Peer.getTaskManager().execute(new HandleReply(client_socket));
                 Peer.getTaskManager().schedule(this, (long) (1000 * Math.pow(2, n_try)), TimeUnit.MILLISECONDS);
                 n_try++;
             } else {

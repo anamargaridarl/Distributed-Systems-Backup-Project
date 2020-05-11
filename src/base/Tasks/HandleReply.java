@@ -21,8 +21,8 @@ public class HandleReply implements Runnable {
     try {
       DataInputStream in = new DataInputStream(new BufferedInputStream(client_socket.getInputStream()));
       byte[] msg_buffer = new byte[MAX_SIZE + 100];
-      in.read(msg_buffer);
-      List<byte[]> request = Clauses.separateHeaderAndBody(msg_buffer);
+      int fullSize = in.read(msg_buffer);
+      List<byte[]> request = Clauses.separateHeaderAndBody(msg_buffer, fullSize);
       Peer.getTaskManager().execute(new HandleReceivedManager(request,client_socket));
     } catch (IOException e) {
       e.printStackTrace();
