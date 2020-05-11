@@ -20,7 +20,7 @@ public class HandleDeleteOffline implements Runnable {
 
     @Override
     public void run() {
-        ArrayList<String> delete_requests = Peer.getStorageManager().getDeleteRequests();
-        delete_requests.forEach((value) -> Peer.getTaskManager().execute(new ManageDeleteFile(delete_message.getVersion(), Peer.getID(), value, client_socket)));
+        /*ArrayList<String> delete_requests = Peer.getStorageManager().getDeleteRequests();
+        delete_requests.forEach((value) -> Peer.getTaskManager().execute(new ManageDeleteFile(delete_message.getVersion(), Peer.getID(), value, client_socket)));*/
     }
 }

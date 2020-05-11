@@ -14,6 +14,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -68,7 +69,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         return storage_manager;
     }
 
-    public Socket getChunkSocket(String file_id, int num) throws NoSuchAlgorithmException, IOException {
+    public static Socket getChunkSocket(String file_id, int num) throws NoSuchAlgorithmException, IOException {
         UUID hash = hashChunk(file_id,num);
         Integer hashKey = getHashKey(hash);
         Integer peerID = allocatePeer(hashKey);
@@ -91,7 +92,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             byte[][] chunks = file_information.splitIntoChunk();
             file_information.setNumberChunks(chunks.length);
             Peer.getStorageManager().addFileInfo(file_information);
-            for (int i = 0; i < chunks.length; i++) {
+            for (int i = 1; i <= chunks.length; i++) {
                 //TODO: use CHORD to lookup peers addresses and create sockets
                 Socket taskSocket = getChunkSocket(file_information.getFileId(),i);
                 ManagePutChunk manage_putchunk = new ManagePutChunk(version, peer_id, file_information.getFileId(), i, rep_deg, chunks[i],taskSocket);
@@ -105,7 +106,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     }
 
     @Override
-    public int restore(String pathname) {
+    public int restore(String pathname)  {
 
         File file = null;
         file = new File(pathname);
@@ -131,10 +132,19 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         getStorageManager().addRestoreRequest(file_id, id);
         int i = 0;
         //TODO: use CHORD to lookup peers that hold the chunk and create socket
-        //ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i);
-        //getTaskManager().execute(manage_getchunk);
-        //TODO: use the created socket to pass it to the task
-        //Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), MAX_DELAY_STORED, TimeUnit.MILLISECONDS);
+        Socket taskSocket = null;
+        /*try {
+            taskSocket = getChunkSocket(file_id, i);
+            ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i,taskSocket);
+            getTaskManager().execute(manage_getchunk);
+            //TODO: use the created socket to pass it to the task
+            Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), MAX_DELAY_STORED, TimeUnit.MILLISECONDS);
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
 
         return 0;
     }
@@ -143,19 +153,28 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     public int delete(String pathname) throws RemoteException {
 
         File file = new File(pathname);
-        String file_id = null;
+        FileInformation file_information = null;
+        if(!file.exists()) {
+            PeerLogger.missingFile(pathname);
+            return -1;
+        }
+
         try {
-            file_id = FileInformation.createFileid(pathname, file.lastModified());
-        } catch (NoSuchAlgorithmException e) {
+            file_information = new FileInformation(file, pathname, 0);
+            byte[][] chunks = file_information.splitIntoChunk();
+            file_information.setNumberChunks(chunks.length);
+
+            //TODO: repetitions are no longer necessary with TCP?
+            for (int n = 1; n <= chunks.length; n++) {
+                Socket taskSocket = getChunkSocket(file_information.getFileId(), n);
+                ManageDeleteFile manage_delete = new ManageDeleteFile(version, peer_id, file_information.getFileId(),n, taskSocket);
+                getTaskManager().schedule(manage_delete, (n + 1) * TIMEOUT, TimeUnit.MILLISECONDS);
+            }
+
+        } catch (IOException | NoSuchAlgorithmException e) {
             PeerLogger.createFileIDFail();
             return -1;
         }
-        for (int i = 0; i < 5; i++) {
-            //TODO: use CHORD to lookup peers that have the chunk and create sockets
-            //ManageDeleteFile manage_delete = new ManageDeleteFile(version, peer_id, file_id);
-            //getTaskManager().schedule(manage_delete, (i + 1) * TIMEOUT, TimeUnit.MILLISECONDS);
-        }
-        getStorageManager().deleteChunks(file_id);
         return 0;
     }
 

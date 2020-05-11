@@ -170,11 +170,11 @@ public class StorageManager implements java.io.Serializable {
         return delete_requests;
     }
 
-    public synchronized void deleteChunks(String file_id) {
+    public synchronized void deleteChunks(String file_id, int chunk_no) {
         for (Iterator<ChunkInfo> iter = chunks_info.iterator(); iter.hasNext(); ) {
             ChunkInfo chunkInfo = iter.next();
-            if (chunkInfo.getFileId().equals(file_id)) {
-                removeStoredOccurrenceChunk(file_id,chunkInfo.getNumber());
+            if (chunkInfo.validateChunk(file_id, chunk_no)) {
+                removeStoredOccurrenceChunk(file_id,chunk_no);
                 removeRepDegree(file_id, chunkInfo.getNumber());
                 removeChunkFile(file_id, chunkInfo.getNumber());
                 gainSpaceAvailable(chunkInfo.getSize());

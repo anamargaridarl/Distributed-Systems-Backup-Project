@@ -5,34 +5,41 @@ import base.TaskLogger;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
 import static base.Clauses.MAX_DELAY_STORED;
 
 public class HandleInitiatorChunks implements Runnable {
 
-    private final Socket client_socket;
+    private Socket client_socket;
     private int i;
     private String version;
     private String file_id;
     private Integer peer_id;
     private String filename;
 
-    public HandleInitiatorChunks(int i, String version, String file_id, Integer peer_id, String filename, Socket client_socket) {
+    public HandleInitiatorChunks(int i, String version, String file_id, Integer peer_id, String filename) {
         this.version = version;
         this.file_id = file_id;
         this.peer_id = peer_id;
         this.i = i;
         this.filename = filename;
-        this.client_socket = client_socket;
+    }
+
+    private void noMoreChunks()
+    {
+        TaskLogger.noChunkReceivedFail();
+        Peer.getStorageManager().removeRestoredChunkData(file_id);
+        Peer.getStorageManager().removeRestoreRequest(file_id, Peer.getID());
+        return;
     }
 
     @Override
     public void run() {
+        //case of error (chunks is not received)
         if (!Peer.getStorageManager().checkReceiveChunk(file_id, i)) {
-            TaskLogger.noChunkReceivedFail();
-            Peer.getStorageManager().removeRestoredChunkData(file_id);
-            Peer.getStorageManager().removeRestoreRequest(file_id, Peer.getID());
+            noMoreChunks();
             return;
         }
         i += 1;
@@ -46,9 +53,16 @@ public class HandleInitiatorChunks implements Runnable {
         }
 
         //TODO: use CHORD to get peer holding the chunk and create socket
-        //ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i);
-        //Peer.getTaskManager().execute(manage_getchunk);
-        //TODO: and pass the new socket to the task
-        //Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), MAX_DELAY_STORED, TimeUnit.MILLISECONDS);
+        try {
+            client_socket = Peer.getChunkSocket(file_id, i);
+            ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i, client_socket);
+            Peer.getTaskManager().execute(manage_getchunk);
+            Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), MAX_DELAY_STORED, TimeUnit.MILLISECONDS);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }
