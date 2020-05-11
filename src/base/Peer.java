@@ -5,12 +5,16 @@ import base.Storage.StorageManager;
 import base.Tasks.*;
 import base.channel.MessageListener;
 
+import javax.swing.text.BadLocationException;
 import java.io.*;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -64,6 +68,14 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         return storage_manager;
     }
 
+    public Socket getChunkSocket(String file_id, int num) throws NoSuchAlgorithmException, IOException {
+        UUID hash = hashChunk(file_id,num);
+        Integer hashKey = getHashKey(hash);
+        Integer peerID = allocatePeer(hashKey);
+        InetSocketAddress peerHost = chord.get(peerID);
+        return createSocket(peerHost);
+    }
+
     @Override
     public int backup(String pathname, int rep_deg) throws RemoteException {
 
@@ -81,8 +93,9 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             Peer.getStorageManager().addFileInfo(file_information);
             for (int i = 0; i < chunks.length; i++) {
                 //TODO: use CHORD to lookup peers addresses and create sockets
-                //ManagePutChunk manage_putchunk = new ManagePutChunk(version, peer_id, file_information.getFileId(), i, rep_deg, chunks[i]);
-                //getTaskManager().execute(manage_putchunk);
+                Socket taskSocket = getChunkSocket(file_information.getFileId(),i);
+                ManagePutChunk manage_putchunk = new ManagePutChunk(version, peer_id, file_information.getFileId(), i, rep_deg, chunks[i],taskSocket);
+                getTaskManager().execute(manage_putchunk);
             }
         } catch (Exception e) {
             PeerLogger.processBackupFail(pathname);
