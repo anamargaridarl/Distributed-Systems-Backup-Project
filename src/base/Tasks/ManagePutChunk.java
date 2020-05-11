@@ -22,8 +22,8 @@ public class ManagePutChunk implements Runnable {
     private final BackupMessage bk_message;
     private int n_try;
 
-    public ManagePutChunk(String v, int sid, String fid, int chunkno, int repd, byte[] bdy, Socket client) {
-        bk_message = new BackupMessage(v, PUTCHUNK, sid, fid, chunkno, repd, bdy);
+    public ManagePutChunk(String v, int sid, String fid, int chunkno, int repd, int n_chunks, byte[] bdy, Socket client) {
+        bk_message = new BackupMessage(v, PUTCHUNK, sid, fid, chunkno, repd, n_chunks, bdy);
         n_try = 0;
         client_socket = client;
     }

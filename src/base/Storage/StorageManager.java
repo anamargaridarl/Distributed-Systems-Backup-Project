@@ -183,6 +183,16 @@ public class StorageManager implements java.io.Serializable {
         }
     }
 
+    public int getNumChunk(String file_id, int chunk_no) {
+        for (Iterator<ChunkInfo> iter = chunks_info.iterator(); iter.hasNext(); ) {
+            ChunkInfo chunkInfo = iter.next();
+            if (chunkInfo.validateChunk(file_id, chunk_no)) {
+                return chunkInfo.getNumber_chunks();
+            }
+        }
+        return -1;
+    }
+
     private void removeChunkFile(String file_id, int chunk_number) {
         String chunk_filename = Peer.getID() + "_STORAGE" + "/" + file_id + ":" + chunk_number;
         File chunk = new File(chunk_filename);

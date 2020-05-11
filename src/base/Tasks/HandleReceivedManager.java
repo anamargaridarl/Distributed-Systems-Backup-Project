@@ -54,6 +54,9 @@ public class HandleReceivedManager implements Runnable {
         case REMOVED:
           handleRemovedChunk();
           break;
+        case DELETEREPLY:
+          handleDeleteReply();
+          break;
         default:
           TaskLogger.invalidMessage(msg_header[1]);
           client_socket.close();
@@ -64,6 +67,10 @@ public class HandleReceivedManager implements Runnable {
     } catch (IOException e) {
       e.printStackTrace(); //log error
     }
+  }
+
+  private void handleDeleteReply() {
+    Peer.getTaskManager().execute(new HandleDeleteReply(msg_header));
   }
 
   private void handlePutChunk() {
@@ -84,7 +91,7 @@ public class HandleReceivedManager implements Runnable {
   }
 
   private void handleDeleteFile() {
-    Peer.getTaskManager().execute(new HandleDeleteFile(msg_header)); //what to do with socket?
+    Peer.getTaskManager().execute(new HandleDeleteFile(msg_header,client_socket));
   }
 
   private void handleAskDelete() {

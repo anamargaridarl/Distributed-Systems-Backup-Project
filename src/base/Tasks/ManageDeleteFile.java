@@ -16,8 +16,8 @@ public class ManageDeleteFile implements Runnable {
 
     private final Message msg_delete;
     private final Socket client_socket;
-    public ManageDeleteFile(String version, int peer_id, String file_id, int chunk_no,Socket c_socket) {
-        msg_delete = new MessageChunkNo(version, DELETE, peer_id, file_id,chunk_no);
+    public ManageDeleteFile(String version, int peer_id, String file_id,Socket c_socket) {
+        msg_delete = new Message(version, DELETE, peer_id, file_id);
         client_socket = c_socket;
     }
 

@@ -24,6 +24,8 @@ import static java.lang.Thread.sleep;
 
 public class Peer extends UnicastRemoteObject implements PeerInterface {
 
+    public static int deletechunks = 0;
+    public static int restorechunks = 0;
     //add methods to access storage and save/load data
     private static String version;
     private static int peer_id;
@@ -70,7 +72,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     }
 
     public static Socket getChunkSocket(String file_id, int num) throws NoSuchAlgorithmException, IOException {
-        UUID hash = hashChunk(file_id,num);
+        UUID hash = hashChunk(file_id, num);
         Integer hashKey = getHashKey(hash);
         Integer peerID = allocatePeer(hashKey);
         InetSocketAddress peerHost = chord.get(peerID);
@@ -82,7 +84,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
 
         File file = new File(pathname);
         FileInformation file_information = null;
-        if(!file.exists()) {
+        if (!file.exists()) {
             PeerLogger.missingFile(pathname);
             return -1;
         }
@@ -94,8 +96,8 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             Peer.getStorageManager().addFileInfo(file_information);
             for (int i = 1; i <= chunks.length; i++) {
                 //TODO: use CHORD to lookup peers addresses and create sockets
-                Socket taskSocket = getChunkSocket(file_information.getFileId(),i);
-                ManagePutChunk manage_putchunk = new ManagePutChunk(version, peer_id, file_information.getFileId(), i, rep_deg, chunks[i],taskSocket);
+                Socket taskSocket = getChunkSocket(file_information.getFileId(), i);
+                ManagePutChunk manage_putchunk = new ManagePutChunk(version, peer_id, file_information.getFileId(), i, rep_deg, chunks.length, chunks[i], taskSocket);
                 getTaskManager().execute(manage_putchunk);
             }
         } catch (Exception e) {
@@ -105,8 +107,9 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         return 0;
     }
 
+
     @Override
-    public int restore(String pathname)  {
+    public int restore(String pathname) {
 
         File file = null;
         file = new File(pathname);
@@ -149,32 +152,34 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         return 0;
     }
 
+
     @Override
     public int delete(String pathname) throws RemoteException {
 
         File file = new File(pathname);
-        FileInformation file_information = null;
-        if(!file.exists()) {
-            PeerLogger.missingFile(pathname);
-            return -1;
-        }
-
+        String file_id = null;
         try {
-            file_information = new FileInformation(file, pathname, 0);
-            byte[][] chunks = file_information.splitIntoChunk();
-            file_information.setNumberChunks(chunks.length);
-
-            //TODO: repetitions are no longer necessary with TCP?
-            for (int n = 1; n <= chunks.length; n++) {
-                Socket taskSocket = getChunkSocket(file_information.getFileId(), n);
-                ManageDeleteFile manage_delete = new ManageDeleteFile(version, peer_id, file_information.getFileId(),n, taskSocket);
-                getTaskManager().schedule(manage_delete, (n + 1) * TIMEOUT, TimeUnit.MILLISECONDS);
-            }
-
-        } catch (IOException | NoSuchAlgorithmException e) {
+            file_id = FileInformation.createFileid(pathname, file.lastModified());
+        } catch (NoSuchAlgorithmException e) {
             PeerLogger.createFileIDFail();
             return -1;
         }
+
+        //TODO: use CHORD to lookup peers that have the chunk and create sockets
+        try {
+            Socket taskSocket = getChunkSocket(file_id, 1);
+            ManageDeleteFile first_manage_delete = new ManageDeleteFile(version, peer_id, file_id, taskSocket);
+            getTaskManager().execute(first_manage_delete); //TODO: verify correctness in this new implementation
+            for (int i = 2; i <= deletechunks; i++) {
+                ManageDeleteFile manage_delete = new ManageDeleteFile(version, peer_id, file_id, taskSocket);
+                getTaskManager().execute(manage_delete); //TODO: verify correctness in this new implementation
+            }
+        } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
+            noSuchAlgorithmException.printStackTrace();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+
         return 0;
     }
 

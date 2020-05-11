@@ -14,12 +14,14 @@ import static base.Clauses.LF;
 public class BackupMessage extends MessageChunkNo {
 
     protected int replicationDeg;
+    protected int n_chunks;
     protected byte[] chunk;
 
-    public BackupMessage(String v, String type, int sid, String fid, int chunkid, int repd, byte[] bdy) {
+    public BackupMessage(String v, String type, int sid, String fid, int chunkid, int repd, int n_chunks, byte[] bdy) {
         super(v, type, sid, fid, chunkid);
         replicationDeg = repd;
         chunk = bdy;
+        this.n_chunks = n_chunks;
     }
 
     //boolean used to distinguish send and reply messages
@@ -39,7 +41,7 @@ public class BackupMessage extends MessageChunkNo {
 
     public byte[] createByteMessage() throws IOException {
         byte[] response;
-        String super_msg = super.createMessage() + " " + replicationDeg + Clauses.CRLF + Clauses.CRLF;
+        String super_msg = super.createMessage() + " " + replicationDeg + n_chunks + Clauses.CRLF + Clauses.CRLF;
         response = super_msg.getBytes();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write(response);
@@ -48,4 +50,7 @@ public class BackupMessage extends MessageChunkNo {
         return response;
     }
 
+    public int getNumberChunks() {
+        return n_chunks;
+    }
 }

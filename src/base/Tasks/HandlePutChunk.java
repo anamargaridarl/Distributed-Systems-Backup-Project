@@ -26,7 +26,7 @@ public class HandlePutChunk implements Runnable {
     public HandlePutChunk(BackupMessage message, Socket socket) {
         this.sender_id = message.getSenderId();
         this.version = message.getVersion();
-        this.chunk_info = new ChunkInfo(message.getFileId(), message.getReplicationDeg(), message.getBody().length, message.getNumber());
+        this.chunk_info = new ChunkInfo(message.getFileId(), message.getReplicationDeg(), message.getBody().length, message.getNumber(), message.getNumberChunks());
         this.chunk = message.getBody();
         this.client_socket = socket;
     }

@@ -27,6 +27,7 @@ public class Clauses {
   public static final String CHUNK = "CHUNK";
   public static final String REMOVED = "REMOVED";
   public static final String ASKDELETE = "ASKDELETE";
+  public static final String DELETEREPLY = "DELETEREPLY";
   public static final int MAX_DELAY_STORED = 400; // in milliseconds
   public static final int MAX_RETRIES = 5;
   public static final int SAVE_PERIOD = 30000; // in milliseconds

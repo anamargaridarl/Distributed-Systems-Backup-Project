@@ -12,13 +12,15 @@ public class ChunkInfo implements java.io.Serializable {
     private final int rep_deg;
     private final int size;
     private final int number;
+    private final int number_chunks;
 
 
-    public ChunkInfo(String file_id, int rep_deg, int size, int number) {
+    public ChunkInfo(String file_id, int rep_deg, int size, int number, int number_chunks) {
         this.file_id = file_id;
         this.rep_deg = rep_deg;
         this.size = size;
         this.number = number;
+        this.number_chunks = number_chunks;
     }
 
     public String getFileId() {
@@ -54,5 +56,9 @@ public class ChunkInfo implements java.io.Serializable {
     @Override
     public int hashCode() {
         return file_id.hashCode() * number;
+    }
+
+    public int getNumber_chunks() {
+        return number_chunks;
     }
 }
