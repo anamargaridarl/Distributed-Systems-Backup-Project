@@ -167,19 +167,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         }
 
         //TODO: use CHORD to lookup peers that have the chunk and create sockets
-        try {
-            Socket taskSocket = getChunkSocket(file_id, 0);
-            ManageDeleteFile first_manage_delete = new ManageDeleteFile(version, peer_id, file_id,0, taskSocket);
-            getTaskManager().execute(first_manage_delete); //TODO: verify correctness in this new implementation
-            /*for (int i = 1; i < deletechunks; i++) {
-                ManageDeleteFile manage_delete = new ManageDeleteFile(version, peer_id, file_id, i ,taskSocket);
-                getTaskManager().execute(manage_delete); //TODO: verify correctness in this new implementation
-            }*/
-        } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-            noSuchAlgorithmException.printStackTrace();
-        } catch (IOException ioException) {
-            ioException.printStackTrace();
-        }
+        getTaskManager().execute(new HandleInitiatorDelete(0,version, file_id, peer_id));
         return 0;
     }
 
