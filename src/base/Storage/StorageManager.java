@@ -139,14 +139,14 @@ public class StorageManager implements java.io.Serializable {
     //backup-stored
     public synchronized void handleStoredSendersOccurrence(String file_id, int number, int sender_id) {
         String chunk_ref = makeChunkRef(file_id, number);
-        if(!stored_senders.containsKey(chunk_ref))
+        if (!stored_senders.containsKey(chunk_ref))
             return;
 
         stored_senders.get(chunk_ref).add(sender_id);
         if (rep_degrees.containsKey(chunk_ref)) {
             stored_senders.get(chunk_ref).add(sender_id);
             int rep_deg = stored_senders.get(chunk_ref).size() + 1;
-            rep_degrees.replace(chunk_ref,rep_deg);
+            rep_degrees.replace(chunk_ref, rep_deg);
         }
     }
 
@@ -174,7 +174,7 @@ public class StorageManager implements java.io.Serializable {
         for (Iterator<ChunkInfo> iter = chunks_info.iterator(); iter.hasNext(); ) {
             ChunkInfo chunkInfo = iter.next();
             if (chunkInfo.validateChunk(file_id, chunk_no)) {
-                removeStoredOccurrenceChunk(file_id,chunk_no);
+                removeStoredOccurrenceChunk(file_id, chunk_no);
                 removeRepDegree(file_id, chunkInfo.getNumber());
                 removeChunkFile(file_id, chunkInfo.getNumber());
                 gainSpaceAvailable(chunkInfo.getSize());
@@ -279,7 +279,7 @@ public class StorageManager implements java.io.Serializable {
         chunks_info.remove(expandable);
         removeChunkFile(expandable.getFileId(), expandable.getNumber());
         removeRepDegree(expandable.getFileId(), expandable.getNumber());
-        removeStoredOccurrenceChunk(expandable.getFileId(),expandable.getNumber());
+        removeStoredOccurrenceChunk(expandable.getFileId(), expandable.getNumber());
         gainSpaceAvailable(expandable.getSize());
         return expandable;
     }

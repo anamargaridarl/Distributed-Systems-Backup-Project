@@ -15,8 +15,8 @@ public class ManageChunk implements Runnable {
     private RestoreMessage restore_message;
     private static Socket client_socket;
 
-    public ManageChunk(String version, int sender_id, String file_id, int i, byte[] body, Socket client_socket) {
-        restore_message = new RestoreMessage(version, CHUNK, sender_id, file_id, i, body);
+    public ManageChunk(String version, int sender_id, String file_id, int i, int numchunks, byte[] body, Socket client_socket) {
+        restore_message = new RestoreMessage(version, CHUNK, sender_id, file_id, i,numchunks, body);
         this.client_socket = client_socket;
     }
 

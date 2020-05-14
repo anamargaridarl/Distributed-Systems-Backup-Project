@@ -29,20 +29,24 @@ public class HandleGetChunk implements Runnable {
     @Override
     public void run() {
 
-        if (Peer.getStorageManager().existsChunkRestore(getchunk_message.getFileId(), getchunk_message.getNumber())) {
-            byte[] body;
-            try {
-                body = Peer.getStorageManager().getChunkData(getchunk_message.getFileId(), getchunk_message.getNumber());
-            } catch (IOException e) {
-                TaskLogger.getChunkRetrieveFail();
-                return;
-            }
-
-            Random random = new Random();
-            int time_wait = random.nextInt(MAX_DELAY_STORED);
-            Peer.getTaskManager().schedule(new ManageChunk(getchunk_message.getVersion(), Peer.getID(), getchunk_message.getFileId(), getchunk_message.getNumber(), body, client_socket)
-                    , time_wait, TimeUnit.MILLISECONDS);
+        byte[] body;
+        int num_chunks = 0;
+        //TODO:successor chain needs to be implemented
+        try {
+            body = Peer.getStorageManager().getChunkData(getchunk_message.getFileId(), getchunk_message.getNumber());
+            //TODO: no need for this value with all the chunks
+            num_chunks = Peer.getStorageManager().getNumChunk(getchunk_message.getFileId(), getchunk_message.getNumber());
+            //TODO: check error in number chunks
+        } catch (IOException e) {
+            TaskLogger.getChunkRetrieveFail();
+            return;
         }
-    }
 
+        Random random = new Random();
+        int time_wait = random.nextInt(MAX_DELAY_STORED);
+        Peer.getTaskManager().schedule(new ManageChunk(getchunk_message.getVersion(), Peer.getID(), getchunk_message.getFileId(), getchunk_message.getNumber(), num_chunks, body, client_socket)
+                , time_wait, TimeUnit.MILLISECONDS);
+    }
 }
+
+

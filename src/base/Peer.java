@@ -137,7 +137,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         int i = 0;
         //TODO: use CHORD to lookup peers that hold the chunk and create socket
         Socket taskSocket = null;
-        /*try {
+        try {
             taskSocket = getChunkSocket(file_id, i);
             ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i,taskSocket);
             getTaskManager().execute(manage_getchunk);
@@ -148,7 +148,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
-        }*/
+        }
 
         return 0;
     }
