@@ -38,7 +38,9 @@ public class ManagePutChunk implements Runnable {
     }
 
     public void processMessage() throws FailedPutChunk, IOException {
-        int curr_rep_degree = Peer.getStorageManager().getStoredSendersOccurrences(bk_message.getFileId(), bk_message.getNumber());
+        //TODO: check if has recieved stored with actual rep deg desirable in the sender_id field
+        //TODO: or if sender id is -1, check is has received /or has enough references
+        int curr_rep_degree = Peer.getStorageManager().getStoredSendersOccurrences(bk_message.getFileId(), bk_message.getNumber()); //TODO: change
         if (curr_rep_degree < bk_message.getReplicationDeg()) {
 
             if (n_try < MAX_RETRIES) {
@@ -52,7 +54,7 @@ public class ManagePutChunk implements Runnable {
                 throw new FailedPutChunk();
             }
         } else {
-            Peer.getStorageManager().saveStoredAsRepDegree(bk_message.getFileId(), bk_message.getNumber());
+            //Peer.getStorageManager().saveStoredAsRepDegree(bk_message.getFileId(), bk_message.getNumber());
             TaskLogger.putChunkOk();
         }
     }

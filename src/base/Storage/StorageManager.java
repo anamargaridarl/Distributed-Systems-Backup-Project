@@ -34,19 +34,19 @@ import static base.Clauses.*;
  */
 public class StorageManager implements java.io.Serializable {
 
-    private ArrayList<FileInformation> files_info;
-    private ArrayList<ChunkInfo> chunks_info;
-    private ConcurrentHashMap<String, Integer> rep_degrees;
-    private ArrayList<String> delete_requests = new ArrayList<>();
+    private final ArrayList<FileInformation> files_info;
+    private final ArrayList<ChunkInfo> chunks_info;
+    private final ConcurrentHashMap<String, Integer> rep_degrees;
+    private final ArrayList<String> delete_requests = new ArrayList<>();
 
     //store "STORED MESSAGES" occurrences from distinct senders (by their id)
-    private ConcurrentHashMap<String, Set<Integer>> stored_senders = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Set<Integer>> stored_senders = new ConcurrentHashMap<>();
 
     //stores restored chunks - <fileid , <chunkno, body>>
-    private transient static ConcurrentHashMap<String, Map<Integer, byte[]>> restored_files = new ConcurrentHashMap<>();
-    private ArrayList<String> restore_request = new ArrayList<>();
+    private final transient ConcurrentHashMap<String, Map<Integer, byte[]>> restored_files = new ConcurrentHashMap<>();
+    private final ArrayList<String> restore_request = new ArrayList<>();
 
-    private transient static Set<String> stored_chunk_request = new HashSet<>();
+    private final transient Set<String> stored_chunk_request = new HashSet<>();
 
     private int total_space = DEFAULT_STORAGE;
     private int occupied_space = 0;

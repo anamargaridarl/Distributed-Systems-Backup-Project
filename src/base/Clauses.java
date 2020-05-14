@@ -22,6 +22,7 @@ public class Clauses {
   public static final int DEFAULT_STORAGE = 100000000; //in KB
   public static final String PUTCHUNK = "PUTCHUNK";
   public static final String STORED = "STORED";
+  public static final String DECLINED = "DECLINED";
   public static final String DELETE = "DELETE";
   public static final String GETCHUNK = "GETCHUNK";
   public static final String CHUNK = "CHUNK";
@@ -33,7 +34,7 @@ public class Clauses {
   public static final int SAVE_PERIOD = 30000; // in milliseconds
   public static final int TIMEOUT = 1000;
   public static final Integer m = 8;
-
+  public static int NOT_INITIATOR = -1; // sender id will be -1 if a message is relayed from a predecessor
   /***FOR TEST PURPOSES ONLY*/
   public static final Hashtable<Integer, InetSocketAddress> chord = new Hashtable<>();
 
@@ -42,9 +43,9 @@ public class Clauses {
     InetSocketAddress obj1 = new InetSocketAddress("localhost", 5001);
     InetSocketAddress obj2 = new InetSocketAddress("localhost", 5002);
 
-    chord.put(Integer.valueOf(0), obj0);
-    chord.put(Integer.valueOf(40), obj1);
-    chord.put(Integer.valueOf(80), obj2);
+    chord.put(0, obj0);
+    chord.put(40, obj1);
+    chord.put(80, obj2);
   }
   /***/
 
