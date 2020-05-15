@@ -33,32 +33,25 @@ public class HandlePutChunk implements Runnable {
         //check in storage if the file belongs to the peer
         if (Peer.getStorageManager().ownsFile(chunk_info.getFileId())) {
             TaskLogger.ownsFile(chunk_info.getFileId());
-            if(sender_id != NOT_INITIATOR) {
-                //TODO: create task to start backup for the successors until rep deg is matched(*) and store its references and reply with stored
-            }
         }
         //check if the peer already has the chunk TODO: or has references of the same
         else if (Peer.getStorageManager().existsChunk(chunk_info)) {
             TaskLogger.alreadyBackedUp(Peer.getID(), chunk_info.getFileId(), chunk_info.getNumber());
-            if(sender_id != NOT_INITIATOR) {
-                //TODO: create task to check rep deg and reply with stored if is achived or start backup for the succesors until new rep deg is matched(*) and then replied with stored
-            }
         }
         //check if there is space enough in the storage
         else if (!Peer.getStorageManager().hasEnoughSpace(chunk_info.getSize())) {
             TaskLogger.insufficientSpaceFail(chunk_info.getSize());
-            if(sender_id != NOT_INITIATOR) {
-                //TODO: create task to start backup for the successros until rep deg is matched(*) and store its references and reply with stored
-            }
         } else {
-            Peer.getStorageManager().addStoredChunkRequest(chunk_info.getFileId(), chunk_info.getNumber());
             processStore();
             return;
         }
 
-        if(sender_id == NOT_INITIATOR) {
+        if (sender_id != NOT_INITIATOR) {
+            Peer.getTaskManager().execute(new ManageBackupAuxiliar(chunk_info,chunk, client_socket));
+        } else {
             Peer.getTaskManager().execute(new ManageDeclined(version, NOT_INITIATOR,chunk_info.getFileId(), chunk_info.getNumber(),client_socket));
         }
+
     }
 
     private void processStore() {
@@ -71,13 +64,10 @@ public class HandlePutChunk implements Runnable {
             return;
         }
 
-        if(sender_id == NOT_INITIATOR) {
-            Peer.getTaskManager().execute(new ManageStored(version, NOT_INITIATOR, chunk_info.getFileId(), chunk_info.getNumber(), client_socket));
+        if (sender_id != NOT_INITIATOR) {
+            Peer.getTaskManager().execute(new ManageBackupAuxiliar(chunk_info,chunk, client_socket));
         } else {
-            //TODO: if sender id >-1 rep deg > 1, send messages to successors to achieve desired rep deg(*) and then reply with stored with actual rep deg in the sender id
+            Peer.getTaskManager().execute(new ManageStored(version, NOT_INITIATOR, chunk_info.getFileId(), chunk_info.getNumber(), client_socket));
         }
     }
-
-    //TODO: (*) - same procedure in each case, send putchunk for successors and store the references
-
 }
