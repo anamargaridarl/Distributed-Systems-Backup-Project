@@ -3,6 +3,9 @@ package base.Tasks;
 import base.Peer;
 import base.TaskLogger;
 import base.messages.BackupMessage;
+import base.messages.BaseMessage;
+import base.messages.MessageChunkNo;
+import base.messages.RestoreMessage;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -15,20 +18,20 @@ import static base.Clauses.*;
     Class that manages incoming messages sent through multicast channels
 */
 public class HandleReceivedManager implements Runnable {
-  private final String[] msg_header;
-  private final byte[] msg_body;
   private final Socket client_socket;
+  private final Object msg;
+  private final String type;
 
-  public HandleReceivedManager(List<byte[]> msg, Socket c_socket) {
-    this.msg_header = parseHeader(msg.get(0));
-    this.msg_body = msg.get(1);
+  public HandleReceivedManager(Object msg, Socket c_socket) {
+    this.msg = msg;
+    this.type = ((BaseMessage)msg).getType();
     this.client_socket = c_socket;
   }
 
   @Override
   public void run() {
     try {
-      switch (msg_header[1]) {
+      switch (type) {
         case PUTCHUNK:
           handlePutChunk();
           break;
@@ -56,47 +59,54 @@ public class HandleReceivedManager implements Runnable {
           handleDeleteReply();
           break;
         default:
-          TaskLogger.invalidMessage(msg_header[1]);
+          TaskLogger.invalidMessage(type);
           client_socket.close();
           break;
       }
     } catch (NumberFormatException e) {
-      TaskLogger.invalidSenderID(msg_header[2]);
+      TaskLogger.invalidSenderID(NOT_INITIATOR);
     } catch (IOException e) {
       e.printStackTrace(); //log error
     }
   }
 
   private void handleDeleteReply() {
-    Peer.getTaskManager().execute(new HandleDeleteReply(msg_header));
+    BaseMessage deleteReply = (BaseMessage) msg;
+    Peer.getTaskManager().execute(new HandleDeleteReply(deleteReply));
   }
 
   private void handlePutChunk() {
-    BackupMessage bckup = new BackupMessage(msg_header, msg_body);
+    BackupMessage bckup = (BackupMessage) msg;
     Peer.getTaskManager().execute(new HandlePutChunk(bckup, client_socket));
   }
 
   private void handleStored() {
-    Peer.getTaskManager().execute(new HandleStored(msg_header, new InetSocketAddress(client_socket.getInetAddress(),client_socket.getPort())));
+    MessageChunkNo stored = (MessageChunkNo) msg;
+    Peer.getTaskManager().execute(new HandleStored(stored, new InetSocketAddress(client_socket.getInetAddress(),client_socket.getPort())));
   }
 
   private void handleGetChunk() {
-    Peer.getTaskManager().execute(new HandleGetChunk(msg_header, client_socket));
+    MessageChunkNo getChunk = (MessageChunkNo) msg;
+    Peer.getTaskManager().execute(new HandleGetChunk(getChunk, client_socket));
   }
 
   private void handleChunk() {
-    Peer.getTaskManager().execute(new HandleChunk(msg_header, msg_body));
+    RestoreMessage restore = (RestoreMessage) msg;
+    Peer.getTaskManager().execute(new HandleChunk(restore));
   }
 
   private void handleDeleteFile() {
-    Peer.getTaskManager().execute(new HandleDeleteFile(msg_header,client_socket));
+    MessageChunkNo deleteFile = (MessageChunkNo) msg;
+    Peer.getTaskManager().execute(new HandleDeleteFile(deleteFile,client_socket));
   }
 
   private void handleAskDelete() {
-    Peer.getTaskManager().execute(new HandleDeleteOffline(msg_header, client_socket));
+    BaseMessage deleteReply = (BaseMessage) msg;
+    Peer.getTaskManager().execute(new HandleDeleteOffline(deleteReply, client_socket));
   }
 
   private void handleRemovedChunk() {
-    Peer.getTaskManager().execute(new HandleRemovedChunk(msg_header));
+    MessageChunkNo removedChunk = (MessageChunkNo) msg;
+    Peer.getTaskManager().execute(new HandleRemovedChunk(removedChunk));
   }
 }

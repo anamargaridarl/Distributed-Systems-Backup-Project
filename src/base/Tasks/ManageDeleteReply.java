@@ -19,6 +19,6 @@ public class ManageDeleteReply implements Runnable {
     }
 
     public void run() {
-        Peer.getTaskManager().execute(new MessageSender(client_socket, msg_dreply.toByteArrayFinal()));
+        Peer.getTaskManager().execute(new MessageSender(client_socket, msg_dreply));
     }
 }

@@ -13,8 +13,8 @@ public class HandleStored implements Runnable {
     private final MessageChunkNo message_store;
     private final InetSocketAddress origin;
 
-    public HandleStored(String[] message, InetSocketAddress inetSocketAddress) {
-        message_store = new MessageChunkNo(message);
+    public HandleStored(MessageChunkNo message, InetSocketAddress inetSocketAddress) {
+        message_store = message;
         origin = inetSocketAddress;
     }
 

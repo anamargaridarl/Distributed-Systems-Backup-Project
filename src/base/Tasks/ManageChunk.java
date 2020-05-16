@@ -22,10 +22,6 @@ public class ManageChunk implements Runnable {
 
     @Override
     public void run() {
-        try {
-            Peer.getTaskManager().execute(new MessageSender(client_socket,restore_message.createByteMessage()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Peer.getTaskManager().execute(new MessageSender(client_socket,restore_message));
     }
 }
