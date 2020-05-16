@@ -40,6 +40,8 @@ public class HandleInitiatorDelete implements Runnable{
             }
 
         }
+        else
+            return;//TODO: no more chunks
     }
 }
 

@@ -4,9 +4,12 @@ import base.ChunkInfo;
 import base.FileInformation;
 import base.Peer;
 import base.StorageLogger;
+import base.Tasks.HandleReply;
+import base.Tasks.ManageDeleteFile;
 
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -156,6 +159,20 @@ public class StorageManager implements java.io.Serializable {
       stored_senders.get(chunk_ref).add(sender_id);
       rep_degrees.put(chunk_ref, sender_id);
     }
+  }
+
+  public synchronized void handleDeleteSucessors(String file_id, int number) throws IOException {
+    String chunk_ref = makeChunkRef(file_id, number);
+    Set<InetSocketAddress> suc = successors_stored_senders.get(chunk_ref);
+    if(suc == null)
+      return;
+
+    for(InetSocketAddress s: suc) {
+        Socket socket = createSocket(s);
+        Peer.getTaskManager().execute(new ManageDeleteFile("1.0",1,file_id,number,socket));
+        Peer.getTaskManager().execute(new HandleReply(socket));
+    }
+
   }
 
   public boolean existsChunk(ChunkInfo chunk) {
