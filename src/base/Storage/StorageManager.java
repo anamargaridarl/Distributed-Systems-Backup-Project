@@ -4,9 +4,12 @@ import base.ChunkInfo;
 import base.FileInformation;
 import base.Peer;
 import base.StorageLogger;
+import base.Tasks.ManageGetChunkSuc;
+import base.messages.MessageChunkNo;
 
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -40,11 +43,14 @@ public class StorageManager implements java.io.Serializable {
   private final ConcurrentHashMap<String, Integer> rep_degrees;
   private final ArrayList<String> delete_requests = new ArrayList<>();
 
+
   //store "STORED MESSAGES" occurrences from distinct senders (by their id)
   private final ConcurrentHashMap<String, Set<Integer>> stored_senders = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, Set<InetSocketAddress>> successors_stored_senders = new ConcurrentHashMap<>();
+  private final ArrayList<InetSocketAddress> restore_senders = null;
 
   //stores restored chunks - <fileid , <chunkno, body>>
+
   private final transient ConcurrentHashMap<String, Map<Integer, byte[]>> restored_files = new ConcurrentHashMap<>();
   private final ArrayList<String> restore_request = new ArrayList<>();
 
@@ -53,11 +59,32 @@ public class StorageManager implements java.io.Serializable {
   private int total_space = DEFAULT_STORAGE;
   private int occupied_space = 0;
 
+
+  public String succ_address = "";
+  public int succ_port = 0;
+
+  public void removeSucInfo()
+  {
+    succ_address = "";
+    succ_port = 0;
+  }
+
+  public void addSucInfo(String address, int port)
+  {
+    succ_address = address;
+    succ_port = port;
+  }
+
   public StorageManager() {
     files_info = new ArrayList<>();
     chunks_info = new ArrayList<>();
     rep_degrees = new ConcurrentHashMap<>();
   }
+
+  public InetSocketAddress getLastSucInfo() {
+      return restore_senders.get(restore_senders.size()-1);
+  }
+
 
   //shared functions
   public byte[] getChunkData(String file_id, int number) throws IOException {
@@ -155,6 +182,20 @@ public class StorageManager implements java.io.Serializable {
         return;
       stored_senders.get(chunk_ref).add(sender_id);
       rep_degrees.put(chunk_ref, sender_id);
+    }
+  }
+
+  public synchronized void handleGetChunk(MessageChunkNo msg) throws IOException {
+    String chunk_ref = makeChunkRef(msg.getFileId(), msg.getNumber());
+    Set<InetSocketAddress> succ = successors_stored_senders.get(chunk_ref);
+
+    for(InetSocketAddress s: succ) {
+      if(!restore_senders.contains(s)) {
+        Socket socket = createSocket(s);
+        Peer.getTaskManager().execute(new ManageGetChunkSuc(msg.getVersion(), msg.getSenderId(), msg.getFileId(), msg.getNumber(), socket));
+        restore_senders.add(s);
+        return;
+      }
     }
   }
 
