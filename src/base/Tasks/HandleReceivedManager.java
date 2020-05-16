@@ -5,6 +5,7 @@ import base.TaskLogger;
 import base.messages.BackupMessage;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.List;
 
@@ -27,17 +28,14 @@ public class HandleReceivedManager implements Runnable {
   @Override
   public void run() {
     try {
-      if (Integer.parseInt(msg_header[2]) == Peer.getID()) {
-        TaskLogger.receivedOwnMessage(msg_header[1]);
-        return;
-      }
-
       switch (msg_header[1]) {
         case PUTCHUNK:
           handlePutChunk();
           break;
         case STORED:
           handleStored();
+          break;
+        case DECLINED: //TODO: check if any handling is necessary with this message
           break;
         case GETCHUNK:
           handleGetChunk();
@@ -79,7 +77,7 @@ public class HandleReceivedManager implements Runnable {
   }
 
   private void handleStored() {
-    Peer.getTaskManager().execute(new HandleStored(msg_header));
+    Peer.getTaskManager().execute(new HandleStored(msg_header, new InetSocketAddress(client_socket.getInetAddress(),client_socket.getPort())));
   }
 
   private void handleGetChunk() {
