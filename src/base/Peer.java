@@ -39,7 +39,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         server_port = port;
         storage_manager = StorageManager.loadStorageManager();
         task_manager = new ScheduledThreadPoolExecutor(10);
-        task_manager.scheduleAtFixedRate(new SaveState(), SAVE_PERIOD, SAVE_PERIOD, TimeUnit.MILLISECONDS);
+        //task_manager.scheduleAtFixedRate(new SaveState(), SAVE_PERIOD, SAVE_PERIOD, TimeUnit.MILLISECONDS);
         task_manager.execute(new MessageListener(server_port));
         addShutdownHook();
         askforDeleteRequests();
@@ -76,7 +76,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         Integer hashKey = getHashKey(hash);
         Integer peerID = allocatePeer(hashKey);
         InetSocketAddress peerHost = chord.get(peerID);
-        System.out.println(peerHost);
         return createSocket(peerHost);
     }
 
