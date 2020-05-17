@@ -17,9 +17,8 @@ public class HandleDeleteFile implements Runnable {
     private String[] msg;
 
 
-    public HandleDeleteFile(String[] msg, Socket socket) {
-        this.msg = msg;
-        msg_delete = new MessageChunkNo(msg);
+    public HandleDeleteFile(MessageChunkNo msg, Socket socket) {
+        msg_delete = msg;
         this.clientsocket = socket;
     }
 
@@ -34,9 +33,7 @@ public class HandleDeleteFile implements Runnable {
 
         if (msg_delete.getNumber() == 0) {
             numChunks = Peer.getStorageManager().getNumChunk(msg_delete.getFileId(), msg_delete.getNumber());
-            if (numChunks == -1)
-                numChunks = Peer.restorechunks;
-            Peer.getTaskManager().execute(new ManageDeleteReply(msg_delete.getVersion(), numChunks, clientsocket));
+            Peer.getTaskManager().execute(new ManageNumDeleteReply(msg_delete.getVersion(),msg_delete.getSenderId(), numChunks,msg_delete.getFileId(), clientsocket));
         }
 
         Peer.getStorageManager().deleteChunks(msg_delete.getFileId(), msg_delete.getNumber());

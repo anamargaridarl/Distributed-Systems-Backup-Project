@@ -21,15 +21,15 @@ public class HandleGetChunk implements Runnable {
     private final MessageChunkNo getchunk_message;
     private Socket client_socket;
 
-    public HandleGetChunk(String[] message, Socket client_socket) {
-        getchunk_message = new MessageChunkNo(message);
+    public HandleGetChunk(MessageChunkNo message, Socket client_socket) {
+        getchunk_message = message;
         this.client_socket = client_socket;
     }
 
     @Override
     public void run() {
 
-        if (Peer.getStorageManager().existsChunkRestore(getchunk_message.getFileId(), getchunk_message.getNumber())) {
+        /*if (Peer.getStorageManager().existsChunkRestore(getchunk_message.getFileId(), getchunk_message.getNumber())) {
             byte[] body;
             try {
                 body = Peer.getStorageManager().getChunkData(getchunk_message.getFileId(), getchunk_message.getNumber());
@@ -42,7 +42,7 @@ public class HandleGetChunk implements Runnable {
             int time_wait = random.nextInt(MAX_DELAY_STORED);
             Peer.getTaskManager().schedule(new ManageChunk(getchunk_message.getVersion(), Peer.getID(), getchunk_message.getFileId(), getchunk_message.getNumber(), body, client_socket)
                     , time_wait, TimeUnit.MILLISECONDS);
-        }
+        }*/
     }
 
 }

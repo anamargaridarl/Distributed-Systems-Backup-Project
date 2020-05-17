@@ -21,6 +21,6 @@ public class ManageDeclined implements Runnable {
 
   @Override
   public void run() {
-    Peer.getTaskManager().execute(new MessageSender(client_socket, st_message.toByteArrayFinal()));
+    Peer.getTaskManager().execute(new MessageSender(client_socket, st_message));
   }
 }

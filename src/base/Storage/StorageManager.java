@@ -4,8 +4,8 @@ import base.ChunkInfo;
 import base.FileInformation;
 import base.Peer;
 import base.StorageLogger;
-import base.Tasks.HandleReply;
 import base.Tasks.ManageDeleteFile;
+import base.channel.MessageReceiver;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -51,7 +51,8 @@ public class StorageManager implements java.io.Serializable {
   private final transient ConcurrentHashMap<String, Map<Integer, byte[]>> restored_files = new ConcurrentHashMap<>();
   private final ArrayList<String> restore_request = new ArrayList<>();
 
-  private final transient Set<String> stored_chunk_request = new HashSet<>();
+
+  public ConcurrentHashMap<String, Integer> delete_chunk_num = new ConcurrentHashMap<>();
 
   private int total_space = DEFAULT_STORAGE;
   private int occupied_space = 0;
@@ -170,7 +171,7 @@ public class StorageManager implements java.io.Serializable {
     for(InetSocketAddress s: suc) {
         Socket socket = createSocket(s);
         Peer.getTaskManager().execute(new ManageDeleteFile("1.0",1,file_id,number,socket));
-        Peer.getTaskManager().execute(new HandleReply(socket));
+        Peer.getTaskManager().execute(new MessageReceiver(socket));
     }
 
   }
@@ -479,6 +480,17 @@ public class StorageManager implements java.io.Serializable {
   }
 
 
+  public int getDeleteChunkNum(String file_id) {
+    if (delete_chunk_num.contains(file_id))
+      return delete_chunk_num.get(file_id);
+    else
+      return -1;
+  }
+
+  public void addDeleteChunkNo(String file_id,int num) {
+    if (!delete_chunk_num.contains(file_id))
+      delete_chunk_num.put(file_id,num);
+  }
   //end save information when peer is off functions
 
 

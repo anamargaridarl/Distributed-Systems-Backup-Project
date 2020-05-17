@@ -14,8 +14,8 @@ public class HandleRemovedChunk implements Runnable {
 
     MessageChunkNo message;
 
-    public HandleRemovedChunk(String[] msg) {
-        message = new MessageChunkNo(msg);
+    public HandleRemovedChunk(MessageChunkNo msg) {
+        message = msg;
     }
 
     @Override

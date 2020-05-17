@@ -26,7 +26,7 @@ public class HandleInitiatorDelete implements Runnable{
 
     @Override
     public void run() {
-        if (i < Peer.deletechunks || i == 0) {
+        if (i < Peer.getStorageManager().getDeleteChunkNum(file_id) || i == 0) {
             try {
                 client_socket = Peer.getChunkSocket(file_id, i);
                 ManageDeleteFile manage_delete = new ManageDeleteFile(version, peer_id, file_id, i ,client_socket);
@@ -40,8 +40,6 @@ public class HandleInitiatorDelete implements Runnable{
             }
 
         }
-        else
-            return;//TODO: no more chunks
     }
 }
 
