@@ -160,7 +160,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
 
 
   @Override
-  public int reclaim(int max_space) throws RemoteException {
+  public int reclaim(int max_space) throws IOException {
     if (max_space < Peer.getStorageManager().getOccupiedSpace() * KB) {
       while (Peer.getStorageManager().getOccupiedSpace() * KB > max_space) {
         ChunkInfo removed = Peer.getStorageManager().removeExpendableChunk();

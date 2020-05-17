@@ -134,7 +134,7 @@ public class TestApp {
                 System.err.println("Service was unable to reclaim the specified space.");
                 System.exit(ERROR);
             }
-        } catch (RemoteException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

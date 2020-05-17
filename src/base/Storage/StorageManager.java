@@ -12,25 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static base.Clauses.*;
 
-/* Class containing information about the storage used with each peer
-    * backed files data
-    * stored chunks data
-    * replication degree of each chunk (concorrent, in order to check
-    whether a backup is needed or not (backup enhancement)
-
-    * registered wanted chunks for restore
-    * space available
-    * get initial space available
-
-    actions to perform:
-    * getters
-    * store chunk if not present already
-    * update chunks replication degree
-
-    * delete chunks of a deleted file
-    * update wanted chunk status
-    * update available space
- */
 public class StorageManager implements java.io.Serializable {
 
     private final ArrayList<FileInformation> files_info;
@@ -38,10 +19,10 @@ public class StorageManager implements java.io.Serializable {
     private final ConcurrentHashMap<String, Integer> rep_degrees;
     private final ArrayList<String> delete_requests = new ArrayList<>();
 
+  //store "STORED MESSAGES" occurrences from distinct senders (by their id)
+  private final ConcurrentHashMap<String, InetSocketAddress> stored_senders = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, Set<InetSocketAddress>> successors_stored_senders = new ConcurrentHashMap<>();
 
-    //store "STORED MESSAGES" occurrences from distinct senders (by their id)
-    private final ConcurrentHashMap<String, Set<Integer>> stored_senders = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, Set<InetSocketAddress>> successors_stored_senders = new ConcurrentHashMap<>();
     //stores restored chunks - <fileid , <chunkno, body>>
     private final transient ConcurrentHashMap<String, Map<Integer, byte[]>> restored_files = new ConcurrentHashMap<>();
 
@@ -103,13 +84,13 @@ public class StorageManager implements java.io.Serializable {
     }
 
     public synchronized void addStoredChunkRequest(String file_id, int number, int sender_id) {
-        String chunk_ref = makeChunkRef(file_id, number);
-        if (sender_id == NOT_INITIATOR) {
-            successors_stored_senders.putIfAbsent(chunk_ref, new HashSet<>());
-        } else {
-            stored_senders.putIfAbsent(chunk_ref, new HashSet<>());
-        }
+    String chunk_ref = makeChunkRef(file_id, number);
+    if (sender_id == NOT_INITIATOR) {
+      successors_stored_senders.putIfAbsent(chunk_ref,new HashSet<>());
+    } else {
+      stored_senders.put(chunk_ref, new InetSocketAddress(Peer.getServerPort())); //DUMMY VALUE
     }
+  }
 
 
     public synchronized void removeStoredOccurrenceChunk(String file_id, int number) {
@@ -117,13 +98,12 @@ public class StorageManager implements java.io.Serializable {
         stored_senders.remove(chunk_ref);
     }
 
-    public synchronized void saveStoredAsRepDegree(String file_id, int number) {
-        String chunk_ref = makeChunkRef(file_id, number);
-        if (stored_senders.containsKey(chunk_ref)) {
-            for (Integer ignored : stored_senders.get(chunk_ref)) {
-                incrementRepDegree(file_id, number);
-            }
-        }
+    public void removeSuccessorStoredOccurrence(String fileId, int number, InetSocketAddress inetSocketAddress) {
+    String chunk_ref = makeChunkRef(fileId, number);
+    if(successors_stored_senders.containsKey(chunk_ref)) {
+      successors_stored_senders.get(chunk_ref).remove(inetSocketAddress);
+      decrementRepDegree(fileId,number);
+    }
     }
 
     public synchronized boolean storeChunk(ChunkInfo chunk_info, byte[] chunk_data) {
@@ -148,27 +128,30 @@ public class StorageManager implements java.io.Serializable {
         reduceSpaceAvailable(chunk_info.getSize());
         return true;
     }
+    
+  //backup-stored
+  public synchronized void handleStoredSendersOccurrence(String file_id, int number, int sender_id, InetSocketAddress origin) {
+    String chunk_ref = makeChunkRef(file_id, number);
+    if (sender_id == NOT_INITIATOR) {
+      if (!successors_stored_senders.containsKey(chunk_ref))
+        return;
+      successors_stored_senders.get(chunk_ref).add(origin);
+      int newValue = rep_degrees.get(chunk_ref) + successors_stored_senders.get(chunk_ref).size();
+      rep_degrees.put(chunk_ref, newValue);
+    } else {
+      if (!stored_senders.containsKey(chunk_ref))
+        return;
+      stored_senders.put(chunk_ref,origin);
+      rep_degrees.put(chunk_ref, sender_id);
+    }
+  }
 
     private synchronized void reduceSpaceAvailable(int size) {
         occupied_space += size;
     }
 
     //backup-stored
-    public synchronized void handleStoredSendersOccurrence(String file_id, int number, int sender_id, InetSocketAddress origin) {
-        String chunk_ref = makeChunkRef(file_id, number);
-        if (sender_id == NOT_INITIATOR) {
-            if (!successors_stored_senders.containsKey(chunk_ref))
-                return;
-            successors_stored_senders.get(chunk_ref).add(origin);
-            int newValue = rep_degrees.get(chunk_ref) + successors_stored_senders.get(chunk_ref).size();
-            rep_degrees.put(chunk_ref, newValue);
-        } else {
-            if (!stored_senders.containsKey(chunk_ref))
-                return;
-            stored_senders.get(chunk_ref).add(sender_id);
-            rep_degrees.put(chunk_ref, sender_id);
-        }
-    }
+    
 
     public synchronized InetSocketAddress handleGetChunk(MessageChunkNo msg) throws IOException {
 
@@ -197,6 +180,18 @@ public class StorageManager implements java.io.Serializable {
         return null;
     }
 
+  public synchronized void deleteChunks(String file_id, int chunk_no) {
+    for (Iterator<ChunkInfo> iter = chunks_info.iterator(); iter.hasNext(); ) {
+      ChunkInfo chunkInfo = iter.next();
+      if (chunkInfo.validateChunk(file_id, chunk_no)) {
+        removeStoredOccurrenceChunk(file_id, chunk_no);
+        removeRepDegree(file_id, chunkInfo.getNumber());
+        removeChunkFile(file_id, chunkInfo.getNumber());
+        gainSpaceAvailable(chunkInfo.getSize());
+        iter.remove();
+      }
+    }
+  }
     public boolean existsChunk(ChunkInfo chunk) {
         return chunks_info.contains(chunk);
     }
@@ -206,29 +201,23 @@ public class StorageManager implements java.io.Serializable {
     }
     //end backup functions
 
-    //delete functions
-    public void addDeleteRequest(String fileId) {
-        if (!delete_requests.contains(fileId)) {
-            delete_requests.add(fileId);
-        }
+  public int getNumChunk(String file_id, int chunk_no) {
+    for (ChunkInfo chunkInfo : chunks_info) {
+      if (chunkInfo.validateChunk(file_id, chunk_no)) {
+        return chunkInfo.getNumber_chunks();
+      }
     }
+  }
 
-    public ArrayList<String> getDeleteRequests() {
-        return delete_requests;
+  private void removeChunkFile(String file_id, int chunk_number) {
+    String chunk_filename = Peer.getID() + "_STORAGE" + "/" + file_id + ":" + chunk_number;
+    File chunk = new File(chunk_filename);
+    if (chunk.delete()) {
+      StorageLogger.removeChunkOk();
+    } else {
+      StorageLogger.removeChunkFail();
     }
-
-    public synchronized void deleteChunks(String file_id, int chunk_no) {
-        for (Iterator<ChunkInfo> iter = chunks_info.iterator(); iter.hasNext(); ) {
-            ChunkInfo chunkInfo = iter.next();
-            if (chunkInfo.validateChunk(file_id, chunk_no)) {
-                removeStoredOccurrenceChunk(file_id, chunk_no);
-                removeRepDegree(file_id, chunkInfo.getNumber());
-                removeChunkFile(file_id, chunkInfo.getNumber());
-                gainSpaceAvailable(chunkInfo.getSize());
-                iter.remove();
-            }
-        }
-    }
+  }
 
     public int getNumChunk(String file_id, int chunk_no) {
         for (Iterator<ChunkInfo> iter = chunks_info.iterator(); iter.hasNext(); ) {
@@ -323,19 +312,21 @@ public class StorageManager implements java.io.Serializable {
         if (expandable == null) { // if there aren't any, remove the oldest chunk
             expandable = chunks_info.get(0);
         }
-        chunks_info.remove(expandable);
-        removeChunkFile(expandable.getFileId(), expandable.getNumber());
-        removeRepDegree(expandable.getFileId(), expandable.getNumber());
-        removeStoredOccurrenceChunk(expandable.getFileId(), expandable.getNumber());
-        gainSpaceAvailable(expandable.getSize());
-        return expandable;
-    }
+         chunks_info.remove(expandable);
+    byte[] chunk_data = Peer.getStorageManager().getChunkData(expandable.getFileId(), expandable.getNumber());
+    expandable.setChunk(chunk_data);
+    removeChunkFile(expandable.getFileId(), expandable.getNumber());
+    removeRepDegree(expandable.getFileId(), expandable.getNumber());
+    removeStoredOccurrenceChunk(expandable.getFileId(), expandable.getNumber());
+    gainSpaceAvailable(expandable.getSize());
+    return expandable;
+  }
 
-    public ChunkInfo getChunkInfo(String removed_file_id, int removed_chunk_number) {
-        for (ChunkInfo chunk_info : chunks_info) {
-            if (chunk_info.getFileId().equals(removed_file_id) && chunk_info.getNumber() == removed_chunk_number) {
-                return chunk_info;
-            }
+  public ChunkInfo getChunkInfo(String file_id, int number) {
+    for (ChunkInfo chunk_info : chunks_info) {
+      if (chunk_info.getFileId().equals(file_id) && chunk_info.getNumber() == number) {
+        return chunk_info;
+      }
         }
         return null;
     }
