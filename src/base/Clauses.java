@@ -36,9 +36,10 @@ public class Clauses {
   public static final int MAX_RETRIES = 5;
   public static final int SAVE_PERIOD = 30000; // in milliseconds
   public static final int TIMEOUT = 1000;
-  public static final Integer m = 8;
+  public static final Integer m = 3; //TODO: change to m:8
   public static int NOT_INITIATOR = -1; // sender id will be -1 if a message is relayed from a predecessor
-  /***FOR TEST PURPOSES ONLY*/
+
+  /**FOR TEST PURPOSES ONLY*/
   public static final Hashtable<Integer, InetSocketAddress> chord = new Hashtable<>();
 
   public static void addElements() {
@@ -47,18 +48,29 @@ public class Clauses {
     InetSocketAddress obj2 = new InetSocketAddress("localhost", 5002);
 
     chord.put(0, obj0);
-    chord.put(40, obj1);
-    chord.put(80, obj2);
+    chord.put(3, obj1);
+    chord.put(6, obj2);
   }
 
   //checks what peer id is supposed to be assigned (TESTING)
   public static Integer checkAllocated(Integer hashKey) {
-    if (hashKey >= 80) {
+    if (hashKey >= 6) {
       return 3;
-    } else if (hashKey >= 40) {
+    } else if (hashKey >= 3) {
       return 2;
     } else
       return 1;
+  }
+
+  //simple method to find out what peer (by hash key) should store the chunk
+  public static Integer allocatePeer(Integer hashKey) {
+    //TODO: use chord sucessor logic to find key sucessor
+    if (hashKey >= 6) {
+      return Peer.getID() != 3 ? 6 : 0;
+    } else if (hashKey >= 3) {
+      return Peer.getID() != 2 ? 3 : 6;
+    } else
+      return Peer.getID() != 1 ? 0 : 3;
   }
 
   /***/
@@ -115,15 +127,6 @@ public class Clauses {
     return hashInt.remainder(divisor).intValue();
   }
 
-  public static Integer allocatePeer(Integer hashKey) {
-    //TODO: use chord sucessor logic to find key sucessor
-    if(hashKey > 80) {
-      return Peer.getID() != 3 ? 80: 0;
-    } else if (hashKey > 40) {
-      return Peer.getID() != 2 ? 40 : 80;
-    } else
-      return Peer.getID() != 1 ? 0 : 40;
-  }
 
   public static List<byte[]> separateHeaderAndBody(byte[] message, int fullSize) {
     int i = 0;

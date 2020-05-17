@@ -159,18 +159,17 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     }
 
 
-    @Override
-    public int reclaim(int max_space) throws RemoteException {
-        if (max_space < Peer.getStorageManager().getOccupiedSpace() * KB) {
-            while (Peer.getStorageManager().getOccupiedSpace() * KB > max_space) {
-                ChunkInfo removed = Peer.getStorageManager().removeExpendableChunk();
-                PeerLogger.removedChunk(removed.getFileId(), removed.getNumber());
-                Peer.getTaskManager().execute(new ManageRemoveChunk(Peer.version, REMOVED, Peer.getID(), removed.getFileId(), removed.getNumber()));
-            }
-            if (max_space == 0) {
-                Peer.getStorageManager().emptyChunksInfo();
-            }
-        }
+  @Override
+  public int reclaim(int max_space) throws RemoteException {
+    if (max_space < Peer.getStorageManager().getOccupiedSpace() * KB) {
+      while (Peer.getStorageManager().getOccupiedSpace() * KB > max_space) {
+        ChunkInfo removed = Peer.getStorageManager().removeExpendableChunk();
+        PeerLogger.removedChunk(removed.getFileId(), removed.getNumber());
+        Peer.getTaskManager().execute(new ManageRemoveChunk(removed));
+      }
+      if (max_space == 0) {
+        Peer.getStorageManager().emptyChunksInfo();
+      }
 
         Peer.getStorageManager().setTotalSpace(max_space);
         PeerLogger.reclaimComplete(Peer.getStorageManager().getTotalSpace(), Peer.getStorageManager().getOccupiedSpace());
