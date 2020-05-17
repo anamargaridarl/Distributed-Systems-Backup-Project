@@ -8,13 +8,14 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MessageSender implements Runnable {
-
+    private final static ConcurrentHashMap<Socket,ObjectOutputStream> outStreams = new ConcurrentHashMap<>();
     private final Socket socket;
-    private final byte[] msg;
+    private final Object msg;
 
-    public MessageSender(Socket socket, byte[] msg) {
+    public MessageSender(Socket socket, Object msg) {
         this.socket = socket;
         this.msg = msg;
     }
@@ -22,8 +23,11 @@ public class MessageSender implements Runnable {
     @Override
     public void run() {
         try {
-            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-            out.write(msg);
+            outStreams.putIfAbsent(socket,new ObjectOutputStream(socket.getOutputStream()));
+            ObjectOutputStream out = outStreams.get(socket);
+            out.reset();
+            out.writeObject(msg);
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }

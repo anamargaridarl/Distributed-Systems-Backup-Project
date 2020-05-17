@@ -8,8 +8,8 @@ public class HandleDeleteReply implements Runnable {
 
     private BaseMessage msg_dreply;
 
-    public  HandleDeleteReply(String[] msg) {
-        msg_dreply = new BaseMessage(msg);
+    public  HandleDeleteReply(BaseMessage msg) {
+        msg_dreply = msg;
     }
 
 

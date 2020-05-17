@@ -1,13 +1,11 @@
 package base.Tasks;
 
 import base.Peer;
-import base.TaskLogger;
+import base.channel.MessageReceiver;
 import base.channel.MessageSender;
-import base.messages.Message;
 import base.messages.MessageChunkNo;
 
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 import static base.Clauses.DELETE;
 import static base.Clauses.ENHANCED_VERSION;
@@ -24,7 +22,7 @@ public class ManageDeleteFile implements Runnable {
     public void run() {
         if (msg_delete.getVersion().equals(ENHANCED_VERSION))
             Peer.getStorageManager().addDeleteRequest(msg_delete.getFileId());
-        Peer.getTaskManager().execute(new MessageSender(client_socket,msg_delete.toByteArrayFinal()));
-        Peer.getTaskManager().execute(new HandleReply(client_socket));
+        Peer.getTaskManager().execute(new MessageSender(client_socket,msg_delete));
+        Peer.getTaskManager().execute(new MessageReceiver(client_socket));
     }
 }

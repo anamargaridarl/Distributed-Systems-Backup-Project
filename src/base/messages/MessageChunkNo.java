@@ -1,31 +1,33 @@
 package base.messages;
 
 import base.Clauses;
+import base.Peer;
 
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static base.Clauses.CR;
-import static base.Clauses.LF;
+import java.net.InetSocketAddress;
 
 public class MessageChunkNo extends Message {
 
     protected int number;
+    protected final InetSocketAddress origin;
 
     public MessageChunkNo(String v, String type, int sid, String fid, int number) {
         super(v, type, sid, fid);
         this.number = number;
+        origin = new InetSocketAddress(Peer.getServerPort());
     }
 
     public MessageChunkNo(String[] message) {
         super(message[0], message[1], Integer.parseInt(message[2]), message[3]);
         number = Integer.parseInt(message[4]);
+        origin = null;
     }
 
     public int getNumber() {
         return number;
+    }
+
+    public InetSocketAddress getOrigin() {
+        return origin;
     }
 
     public String createMessageFinal() {

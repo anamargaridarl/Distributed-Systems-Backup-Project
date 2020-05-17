@@ -3,19 +3,21 @@ package base.Tasks;
 import base.Peer;
 import base.messages.MessageChunkNo;
 
+import java.net.InetSocketAddress;
+
 /*
     Class that processes stored messages
  */
 public class HandleStored implements Runnable {
 
-    MessageChunkNo message_store;
+    private final MessageChunkNo message_store;
 
-    public HandleStored(String[] message) {
-        message_store = new MessageChunkNo(message);
+    public HandleStored(MessageChunkNo message) {
+        message_store = message;
     }
 
     @Override
     public void run() {
-        Peer.getStorageManager().handleStoredSendersOccurrence(message_store.getFileId(), message_store.getNumber(), message_store.getSenderId());
+        Peer.getStorageManager().handleStoredSendersOccurrence(message_store.getFileId(), message_store.getNumber(), message_store.getSenderId(),message_store.getOrigin());
     }
 }

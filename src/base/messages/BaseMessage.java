@@ -2,9 +2,11 @@ package base.messages;
 
 import base.Clauses;
 
+import java.io.Serializable;
+
 import static base.Clauses.CRLF;
 
-public class BaseMessage {
+public class BaseMessage implements Serializable {
 
     protected String version;
     protected int SenderId;

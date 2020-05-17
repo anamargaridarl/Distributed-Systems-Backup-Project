@@ -13,8 +13,8 @@ public class HandleDeleteOffline implements Runnable {
     private BaseMessage delete_message;
     private Socket client_socket;
 
-    public HandleDeleteOffline(String[] msg, Socket client_socket) {
-        delete_message = new BaseMessage(msg);
+    public HandleDeleteOffline(BaseMessage msg, Socket client_socket) {
+        delete_message = msg;
         this.client_socket = client_socket;
     }
 

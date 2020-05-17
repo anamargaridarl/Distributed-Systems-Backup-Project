@@ -10,7 +10,7 @@ import java.util.List;
 
 import static base.Clauses.CR;
 import static base.Clauses.LF;
-
+//TODO: remove version of protocol
 public class BackupMessage extends MessageChunkNo {
 
     protected int replicationDeg;

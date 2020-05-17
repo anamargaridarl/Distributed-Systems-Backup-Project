@@ -14,8 +14,8 @@ public class HandleDeleteFile implements Runnable {
     private final Socket clientsocket;
     private MessageChunkNo msg_delete;
 
-    public HandleDeleteFile(String[] msg, Socket socket) {
-        msg_delete = new MessageChunkNo(msg);
+    public HandleDeleteFile(MessageChunkNo msg, Socket socket) {
+        msg_delete = msg;
         this.clientsocket = socket;
     }
 
