@@ -14,25 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static base.Clauses.*;
 
-/* Class containing information about the storage used with each peer
-    * backed files data
-    * stored chunks data
-    * replication degree of each chunk (concorrent, in order to check
-    whether a backup is needed or not (backup enhancement)
-
-    * registered wanted chunks for restore
-    * space available
-    * get initial space available
-
-    actions to perform:
-    * getters
-    * store chunk if not present already
-    * update chunks replication degree
-
-    * delete chunks of a deleted file
-    * update wanted chunk status
-    * update available space
- */
 public class StorageManager implements java.io.Serializable {
 
   private final ArrayList<FileInformation> files_info;
@@ -41,7 +22,7 @@ public class StorageManager implements java.io.Serializable {
   private final ArrayList<String> delete_requests = new ArrayList<>();
 
   //store "STORED MESSAGES" occurrences from distinct senders (by their id)
-  private final ConcurrentHashMap<String, Set<Integer>> stored_senders = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, InetSocketAddress> stored_senders = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, Set<InetSocketAddress>> successors_stored_senders = new ConcurrentHashMap<>();
 
   //stores restored chunks - <fileid , <chunkno, body>>
@@ -95,22 +76,20 @@ public class StorageManager implements java.io.Serializable {
     if (sender_id == NOT_INITIATOR) {
       successors_stored_senders.putIfAbsent(chunk_ref,new HashSet<>());
     } else {
-      stored_senders.putIfAbsent(chunk_ref, new HashSet<>());
+      stored_senders.put(chunk_ref, new InetSocketAddress(Peer.getServerPort())); //DUMMY VALUE
     }
   }
-
 
   public synchronized void removeStoredOccurrenceChunk(String file_id, int number) {
     String chunk_ref = makeChunkRef(file_id, number);
     stored_senders.remove(chunk_ref);
   }
 
-  public synchronized void saveStoredAsRepDegree(String file_id, int number) {
-    String chunk_ref = makeChunkRef(file_id, number);
-    if (stored_senders.containsKey(chunk_ref)) {
-      for (Integer ignored : stored_senders.get(chunk_ref)) {
-        incrementRepDegree(file_id, number);
-      }
+  public void removeSuccessorStoredOccurrence(String fileId, int number, InetSocketAddress inetSocketAddress) {
+    String chunk_ref = makeChunkRef(fileId, number);
+    if(successors_stored_senders.containsKey(chunk_ref)) {
+      successors_stored_senders.get(chunk_ref).remove(inetSocketAddress);
+      decrementRepDegree(fileId,number);
     }
   }
 
@@ -153,7 +132,7 @@ public class StorageManager implements java.io.Serializable {
     } else {
       if (!stored_senders.containsKey(chunk_ref))
         return;
-      stored_senders.get(chunk_ref).add(sender_id);
+      stored_senders.put(chunk_ref,origin);
       rep_degrees.put(chunk_ref, sender_id);
     }
   }
@@ -174,10 +153,6 @@ public class StorageManager implements java.io.Serializable {
     }
   }
 
-  public ArrayList<String> getDeleteRequests() {
-    return delete_requests;
-  }
-
   public synchronized void deleteChunks(String file_id, int chunk_no) {
     for (Iterator<ChunkInfo> iter = chunks_info.iterator(); iter.hasNext(); ) {
       ChunkInfo chunkInfo = iter.next();
@@ -192,8 +167,7 @@ public class StorageManager implements java.io.Serializable {
   }
 
   public int getNumChunk(String file_id, int chunk_no) {
-    for (Iterator<ChunkInfo> iter = chunks_info.iterator(); iter.hasNext(); ) {
-      ChunkInfo chunkInfo = iter.next();
+    for (ChunkInfo chunkInfo : chunks_info) {
       if (chunkInfo.validateChunk(file_id, chunk_no)) {
         return chunkInfo.getNumber_chunks();
       }
@@ -204,7 +178,6 @@ public class StorageManager implements java.io.Serializable {
   private void removeChunkFile(String file_id, int chunk_number) {
     String chunk_filename = Peer.getID() + "_STORAGE" + "/" + file_id + ":" + chunk_number;
     File chunk = new File(chunk_filename);
-
     if (chunk.delete()) {
       StorageLogger.removeChunkOk();
     } else {
@@ -273,7 +246,7 @@ public class StorageManager implements java.io.Serializable {
     total_space = new_space;
   }
 
-  public ChunkInfo removeExpendableChunk() {
+  public ChunkInfo removeExpendableChunk() throws IOException {
     ChunkInfo expandable = null;
     for (ChunkInfo chunk : chunks_info) { //check if there is any disposable chunk with more than enough replicas
       if (chunk.getRepDeg() < getChunkRepDegree(chunk.getFileId(), chunk.getNumber())) {
@@ -285,6 +258,8 @@ public class StorageManager implements java.io.Serializable {
       expandable = chunks_info.get(0);
     }
     chunks_info.remove(expandable);
+    byte[] chunk_data = Peer.getStorageManager().getChunkData(expandable.getFileId(), expandable.getNumber());
+    expandable.setChunk(chunk_data);
     removeChunkFile(expandable.getFileId(), expandable.getNumber());
     removeRepDegree(expandable.getFileId(), expandable.getNumber());
     removeStoredOccurrenceChunk(expandable.getFileId(), expandable.getNumber());
@@ -292,9 +267,9 @@ public class StorageManager implements java.io.Serializable {
     return expandable;
   }
 
-  public ChunkInfo getChunkInfo(String removed_file_id, int removed_chunk_number) {
+  public ChunkInfo getChunkInfo(String file_id, int number) {
     for (ChunkInfo chunk_info : chunks_info) {
-      if (chunk_info.getFileId().equals(removed_file_id) && chunk_info.getNumber() == removed_chunk_number) {
+      if (chunk_info.getFileId().equals(file_id) && chunk_info.getNumber() == number) {
         return chunk_info;
       }
     }
@@ -415,12 +390,6 @@ public class StorageManager implements java.io.Serializable {
 
   //endRestoreFunctions
 
-  //??
-  public synchronized void deleteFile(String file_id) {
-    files_info.removeIf(fileInfo -> fileInfo.getFileId().equals(file_id));
-  }
-  //???
-
   //save information when peer is off functions
   public static StorageManager loadStorageManager() {
     String filename = Peer.getID() + "_STATE.ser";
@@ -461,9 +430,6 @@ public class StorageManager implements java.io.Serializable {
     this.rep_degrees.clear();
   }
 
-
   //end save information when peer is off functions
-
-
 }
 

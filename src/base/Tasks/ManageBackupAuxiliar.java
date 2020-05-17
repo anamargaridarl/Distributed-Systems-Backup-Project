@@ -12,7 +12,7 @@ import static base.Clauses.*;
 
 public class ManageBackupAuxiliar implements Runnable {
 
-  private final Socket initiatorSocket;
+  private Socket initiatorSocket;
   private final ChunkInfo chunkInfo;
   private final byte[] chunk;
   private int nSuccsTried;
@@ -22,6 +22,10 @@ public class ManageBackupAuxiliar implements Runnable {
     this.chunkInfo = chunk_info;
     this.initiatorSocket = initiatorSocket;
     nSuccsTried = 0;
+  }
+
+  public ManageBackupAuxiliar(ChunkInfo chunkInfo, byte[] chunk) {
+    this(chunkInfo,chunk,null);
   }
 
   @Override
@@ -37,7 +41,7 @@ public class ManageBackupAuxiliar implements Runnable {
         }
         try {
           //TODO: substitute with chord get Next successor
-          InetSocketAddress succ = chord.get(((Peer.getID() + nSuccsTried + i - 1) % 3) * 40);
+          InetSocketAddress succ = chord.get(((Peer.getID() + nSuccsTried + i - 1) % 3 * 3));
           Socket sock = createSocket(succ);
           Peer.getTaskManager().execute(new ManagePutChunk(VANILLA_VERSION, NOT_INITIATOR, chunkInfo.getFileId(), chunkInfo.getNumber(), chunkInfo.getRepDeg(), chunkInfo.getNumber_chunks(), chunk, sock));
           nSuccsTried++;
@@ -46,7 +50,7 @@ public class ManageBackupAuxiliar implements Runnable {
         }
       }
       Peer.getTaskManager().schedule(this, TIMEOUT, TimeUnit.MILLISECONDS);
-    } else {
+    } else if(initiatorSocket != null) {
       Peer.getTaskManager().execute(new ManageStored(Peer.getVersion(),currRep,chunkInfo.getFileId(),chunkInfo.getNumber(),initiatorSocket));
     }
   }

@@ -27,13 +27,12 @@ public class ManageRemoveChunk implements Runnable {
       UUID chunkHash = hashChunk(removedChunk.getFileId(), removedChunk.getNumber());
       Integer hashKey = getHashKey(chunkHash);
       Integer allocated = checkAllocated(hashKey);
-      if(allocated == Peer.getID()) {
-        Peer.getTaskManager().execute(new ManageBackupAuxiliar(removedChunk,removedChunk.getChunk()));
+      if (allocated == Peer.getID()) {
+        Peer.getTaskManager().execute(new ManageBackupAuxiliar(removedChunk, removedChunk.getChunk()));
       } else {
-        MessageChunkNo removedMsg = new MessageChunkNo(VANILLA_VERSION,REMOVED,Peer.getID(),removedChunk.getFileId(),removedChunk.getNumber());
-        Socket peerSocket = Peer.getChunkSocket(removedChunk.getFileId(),removedChunk.getNumber());
-        Peer.getTaskManager().execute(new MessageSender(peerSocket,removedMsg));
-       //Uponreceival //Peer.getStorageManager().removeSuccessorStoredOccurrence(removedChunk.getFileId(),removedChunk.getNumber(),new InetSocketAddress(peerSocket.getInetAddress(),peerSocket.getPort()));
+        MessageChunkNo removedMsg = new MessageChunkNo(VANILLA_VERSION, REMOVED, Peer.getID(), removedChunk.getFileId(), removedChunk.getNumber());
+        Socket peerSocket = Peer.getChunkSocket(removedChunk.getFileId(), removedChunk.getNumber());
+        Peer.getTaskManager().execute(new MessageSender(peerSocket, removedMsg));
       }
     } catch (NoSuchAlgorithmException | IOException e) {
       e.printStackTrace();
