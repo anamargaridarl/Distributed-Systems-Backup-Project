@@ -8,7 +8,7 @@ import static base.Clauses.CRLF;
 
 public class BaseMessage implements Serializable {
 
-    protected String version;
+    protected String version; //TODO: remove version
     protected int SenderId;
     protected String type;
 
