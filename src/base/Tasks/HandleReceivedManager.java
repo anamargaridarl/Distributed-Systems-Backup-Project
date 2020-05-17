@@ -82,7 +82,7 @@ public class HandleReceivedManager implements Runnable {
 
   private void handleStored() {
     MessageChunkNo stored = (MessageChunkNo) msg;
-    Peer.getTaskManager().execute(new HandleStored(stored, new InetSocketAddress(client_socket.getInetAddress(),client_socket.getPort())));
+    Peer.getTaskManager().execute(new HandleStored(stored));
   }
 
   private void handleGetChunk() {
