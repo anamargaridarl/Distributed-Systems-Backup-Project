@@ -26,10 +26,6 @@ public class RestoreMessage extends MessageChunkNo {
         this.body = body;
     }
 
-    public void setBody(byte[] body) {
-        this.body = body;
-    }
-
 
     public byte[] getBody() {
         return body;
@@ -39,22 +35,4 @@ public class RestoreMessage extends MessageChunkNo {
         return this.number_chunks;
     }
 
-    public byte[] createByteModifiedMessage(Integer port) throws IOException {
-        byte[] msg = createMessageFinal().getBytes();
-        ByteArrayOutputStream add_arrays = new ByteArrayOutputStream();
-        add_arrays.write(msg);
-        ByteBuffer bb = ByteBuffer.allocate(4);
-        bb.putInt(port);
-        add_arrays.write(bb.array());
-        return add_arrays.toByteArray();
-    }
-
-    public byte[] createByteMessage() throws IOException {
-        String msg = createMessage() + " " + this.number_chunks + Clauses.CRLF + Clauses.CRLF;
-        byte[] msg_bytes = msg.getBytes();
-        ByteArrayOutputStream add_arrays = new ByteArrayOutputStream();
-        add_arrays.write(msg_bytes);
-        add_arrays.write(body);
-        return add_arrays.toByteArray();
-    }
 }

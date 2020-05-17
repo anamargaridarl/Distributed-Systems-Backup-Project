@@ -18,6 +18,6 @@ public class ManageInfoToInitiator implements Runnable {
 
     @Override
     public void run() {
-        Peer.getTaskManager().execute(new MessageSender(client_socket,info_message.toByteArrayFinal()));
+        Peer.getTaskManager().execute(new MessageSender(client_socket,info_message));
     }
 }

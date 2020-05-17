@@ -10,8 +10,8 @@ public class HandleForwardGet implements Runnable {
     private final MessageChunkNo getchunk_message;
     private Socket client_socket;
 
-    public HandleForwardGet(String[] message, Socket client_socket) {
-        getchunk_message = new MessageChunkNo(message);
+    public HandleForwardGet(MessageChunkNo message, Socket client_socket) {
+        getchunk_message = message;
         this.client_socket = client_socket;
     }
 

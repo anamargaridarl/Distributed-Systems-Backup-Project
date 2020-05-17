@@ -9,8 +9,8 @@ public class HandleChunk implements Runnable {
 
     private final RestoreMessage restore_message;
 
-    public HandleChunk(String[] message, byte[] body) {
-        restore_message = new RestoreMessage(message, body);
+    public HandleChunk(RestoreMessage restore) {
+        restore_message = restore;
     }
 
     @Override

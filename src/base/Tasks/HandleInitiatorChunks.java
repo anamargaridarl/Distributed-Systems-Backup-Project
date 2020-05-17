@@ -2,6 +2,7 @@ package base.Tasks;
 
 import base.Peer;
 import base.TaskLogger;
+import base.channel.MessageReceiver;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -27,23 +28,12 @@ public class HandleInitiatorChunks implements Runnable {
         this.filename = filename;
     }
 
-    /*
-    private void noMoreChunks() {
-        TaskLogger.noChunkReceivedFail();
-        Peer.getStorageManager().removeRestoredChunkData(file_id);
-        Peer.getStorageManager().removeRestoreRequest(file_id, Peer.getID());
-        return;
-    }*/
-
     @Override
     public void run() {
-        if (i == 0 || i < Peer.getStorageManager().getRestoreChunkNum(file_id)) {
-        /*if (!Peer.getStorageManager().checkReceiveChunk(file_id, i)) {
-            noMoreChunks();
-            return;
-        }*/
+        if (i == 0 || i <= Peer.getStorageManager().getRestoreChunkNum(file_id)) {
 
-            if (i == Peer.getStorageManager().getRestoreChunkNum(file_id)) {
+
+            if (i == Peer.getStorageManager().getRestoreChunkNum(file_id)  && i != 0) {
                 try {
                     Peer.getStorageManager().restoreFile(filename, file_id, Peer.getStorageManager().getRestoreChunkNum(file_id));
                 } catch (IOException ioException) {
@@ -53,7 +43,6 @@ public class HandleInitiatorChunks implements Runnable {
 
 
             //TODO: use CHORD to get peer holding the chunk and create socket
-            i = i + 1;
             try {
                 client_socket = Peer.getChunkSocket(file_id, i);
             } catch (NoSuchAlgorithmException e) {
@@ -64,6 +53,7 @@ public class HandleInitiatorChunks implements Runnable {
 
             ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i, client_socket);
             Peer.getTaskManager().execute(manage_getchunk);
+            i = i + 1;
             Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), MAX_DELAY_STORED, TimeUnit.MILLISECONDS);
 
         }

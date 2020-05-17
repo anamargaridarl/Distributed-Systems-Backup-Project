@@ -1,7 +1,6 @@
 package base.Tasks;
 
 import base.Peer;
-import base.SucessorInfo;
 import base.TaskLogger;
 import base.messages.MessageChunkNo;
 
@@ -22,8 +21,8 @@ public class HandleGetChunk implements Runnable {
     private final MessageChunkNo getchunk_message;
     private Socket client_socket;
 
-    public HandleGetChunk(String[] message, Socket client_socket) {
-        getchunk_message = new MessageChunkNo(message);
+    public HandleGetChunk(MessageChunkNo message, Socket client_socket) {
+        getchunk_message = message;
         this.client_socket = client_socket;
     }
 
@@ -65,7 +64,6 @@ public class HandleGetChunk implements Runnable {
             Peer.getTaskManager().schedule(new ManageChunk(getchunk_message.getVersion(), Peer.getID(), getchunk_message.getFileId(), getchunk_message.getNumber(), num_chunks, body, client_socket)
                     , time_wait, TimeUnit.MILLISECONDS);
         }
-
 
     }
 }

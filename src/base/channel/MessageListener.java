@@ -1,13 +1,10 @@
 package base.channel;
 
 import base.Peer;
-import base.Tasks.HandleReply;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
 
 public class MessageListener implements Runnable {
   ServerSocket server_socket;
@@ -23,7 +20,7 @@ public class MessageListener implements Runnable {
     while (true) {
       try {
         Socket client = server_socket.accept();
-        Peer.getTaskManager().execute(new HandleReply(client));
+        Peer.getTaskManager().execute(new MessageReceiver(client));
       } catch (IOException e) {
         e.printStackTrace();
       }

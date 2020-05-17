@@ -3,6 +3,7 @@ package base.Tasks;
 import base.FailedPutChunk;
 import base.Peer;
 import base.TaskLogger;
+import base.channel.MessageReceiver;
 import base.channel.MessageSender;
 import base.messages.BackupMessage;
 
@@ -37,17 +38,15 @@ public class ManagePutChunk implements Runnable {
     }
 
     public void processMessage() throws FailedPutChunk, IOException {
-        //TODO: check if has recieved stored with actual rep deg desirable in the sender_id field
-        //TODO: or if sender id is -1, check is has received /or has enough references
-        int curr_rep_degree = Peer.getStorageManager().getCurrentRepDegree(bk_message.getFileId(), bk_message.getNumber()); //TODO: change
+        int curr_rep_degree = Peer.getStorageManager().getCurrentRepDegree(bk_message.getFileId(), bk_message.getNumber());
         if (curr_rep_degree < bk_message.getReplicationDeg()) {
 
-            if (n_try < MAX_RETRIES) {
-                Peer.getTaskManager().execute(new MessageSender(client_socket,bk_message.createByteMessage()));
+            if (n_try < 1) {
+                Peer.getTaskManager().execute(new MessageSender(client_socket,bk_message));
                 Peer.getStorageManager().addStoredChunkRequest(bk_message.getFileId(), bk_message.getNumber(),bk_message.getSenderId());
-                Peer.getTaskManager().execute(new HandleReply(client_socket));
+                Peer.getTaskManager().execute(new MessageReceiver(client_socket));
                 if(bk_message.getSenderId() != NOT_INITIATOR) {
-                    Peer.getTaskManager().schedule(this, (long) (1000 * Math.pow(2, n_try)), TimeUnit.MILLISECONDS);
+                    Peer.getTaskManager().schedule(this, (long) (TIMEOUT*3), TimeUnit.MILLISECONDS);
                     n_try++;
                 }
             } else {

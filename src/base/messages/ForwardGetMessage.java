@@ -4,7 +4,7 @@ import base.Clauses;
 
 import static base.Clauses.CRLF;
 
-public class ForwardGetMessage {
+public class ForwardGetMessage extends BaseMessage {
 
     String file_id;
     int chunk_no;
@@ -12,15 +12,17 @@ public class ForwardGetMessage {
 
 
     public ForwardGetMessage(int flag,String file_id,int chunk_no) {
+        super("1.0","FORWARDGET",2);
         this.flag = flag;
         this.file_id = file_id;
         this.chunk_no = chunk_no;
     }
 
     public ForwardGetMessage(String[] msg) {
-        this.flag = Integer.parseInt(msg[0]);
-        this.file_id = msg[1];
-        this.chunk_no = Integer.parseInt(msg[2]);
+        super(msg[0],msg[1], Integer.parseInt(msg[2]));
+        this.flag = Integer.parseInt(msg[3]);
+        this.file_id = msg[4];
+        this.chunk_no = Integer.parseInt(msg[5]);
     }
 
     public int getFlag() {
@@ -36,7 +38,7 @@ public class ForwardGetMessage {
     }
 
     public String createMessage() {
-        return flag + " " + file_id + " " + chunk_no;
+        return super.createMessage() + " " + flag + " " + file_id + " " + chunk_no;
     }
 
     public String createMessageFinal() {

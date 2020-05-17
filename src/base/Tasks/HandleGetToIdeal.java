@@ -12,8 +12,8 @@ public class HandleGetToIdeal implements Runnable {
     private final ForwardGetMessage info_message;
     private Socket client_socket;
 
-    public HandleGetToIdeal(String[] message, Socket client_socket) {
-        info_message = new ForwardGetMessage(message);
+    public HandleGetToIdeal(ForwardGetMessage message, Socket client_socket) {
+        info_message =message;
         this.client_socket = client_socket;
     }
 

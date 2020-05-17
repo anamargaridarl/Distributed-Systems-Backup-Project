@@ -414,6 +414,7 @@ public class StorageManager implements java.io.Serializable {
         String chunk_filename = Peer.getID() + "_RESTORE" + "/" + filename;
         File file = new File(chunk_filename);
 
+
         if (!file.exists()) {
             file.getParentFile().mkdirs();
             file.createNewFile();
@@ -421,6 +422,8 @@ public class StorageManager implements java.io.Serializable {
 
         Map<Integer, byte[]> chunks = restored_files.get(fileid);
         FileOutputStream file_to_write = new FileOutputStream(file);
+
+        System.out.println("size saved chunks:" + chunks.size());
 
         for (int i = 0; i < number_chunks; i++) {
             file_to_write.write(chunks.get(i));
@@ -506,10 +509,7 @@ public class StorageManager implements java.io.Serializable {
     }
 
     public int getRestoreChunkNum(String file_id) {
-        if (restore_chunk_num.contains(file_id))
-            return restore_chunk_num.get(file_id);
-        else
-            return -1;
+        return restore_chunk_num.getOrDefault(file_id,-1);
     }
 
     public int getDeleteChunkNum(String file_id) {
@@ -534,8 +534,7 @@ public class StorageManager implements java.io.Serializable {
     }
 
     public void addRestoreChunkNo(String file_id,int num) {
-        if (!restore_chunk_num.contains(file_id))
-            restore_chunk_num.put(file_id,num);
+        restore_chunk_num.putIfAbsent(file_id, num);
     }
 
     public void addDeleteChunkNo(String file_id,int num) {

@@ -1,6 +1,7 @@
 package base.Tasks;
 
 import base.Peer;
+import base.channel.MessageReceiver;
 import base.channel.MessageSender;
 import base.messages.MessageChunkNo;
 
@@ -23,7 +24,7 @@ public class ManageGetChunk implements Runnable {
 
     @Override
     public void run() {
-        Peer.getTaskManager().execute(new MessageSender(client_socket,getchunk_message.toByteArrayFinal()));
-        Peer.getTaskManager().execute(new HandleReply(client_socket));
+        Peer.getTaskManager().execute(new MessageSender(client_socket,getchunk_message));
+        Peer.getTaskManager().execute(new MessageReceiver(client_socket));
     }
 }

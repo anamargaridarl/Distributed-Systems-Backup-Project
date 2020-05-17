@@ -19,6 +19,6 @@ public class ManageGetToIdeal implements Runnable {
 
     @Override
     public void run() {
-        Peer.getTaskManager().execute(new MessageSender(client_socket,info_message.toByteArrayFinal()));
+        Peer.getTaskManager().execute(new MessageSender(client_socket,info_message));
     }
 }

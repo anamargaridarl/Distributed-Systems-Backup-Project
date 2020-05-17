@@ -24,6 +24,8 @@ import static java.lang.Thread.sleep;
 
 public class Peer extends UnicastRemoteObject implements PeerInterface {
 
+    public static int deletechunks = 0;
+    public static int restorechunks = 0;
     //add methods to access storage and save/load data
     private static String version;
     private static int peer_id;
@@ -55,6 +57,10 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
 
     public static int getID() {
         return peer_id;
+    }
+
+    public static int getServerPort() {
+        return server_port;
     }
 
     public static String getVersion() {
@@ -125,7 +131,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             return -1;
         }
 
-        //find the name of the file
         String[] parts = pathname.split("/");
         String filename = parts[parts.length - 1];
 
@@ -152,6 +157,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         getTaskManager().execute(new HandleInitiatorDelete(0, version, file_id, peer_id));
         return 0;
     }
+
 
     @Override
     public int reclaim(int max_space) throws RemoteException {

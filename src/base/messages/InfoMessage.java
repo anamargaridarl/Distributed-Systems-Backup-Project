@@ -4,31 +4,33 @@ import base.Clauses;
 
 import static base.Clauses.CRLF;
 
-public class InfoMessage {
+public class InfoMessage extends BaseMessage {
 
     protected String address;
     protected int port;
 
     public InfoMessage(String address, int port) {
+        super("1.0", "GETTOIDEAL" ,1);
         this.address=address;
         this.port = port;
     }
 
     public InfoMessage(String[] msg) {
-        this.address = msg[0];
-        this.port = Integer.parseInt(msg[1]);
+        super(msg[0],msg[1], Integer.parseInt(msg[2]));
+        this.address = msg[3];
+        this.port = Integer.parseInt(msg[4]);
     }
 
 
     public String createMessage() {
         String response;
-        response = address + " " + port;
+        response = super.createMessage() + " " + address + " " + port;
         return response;
     }
 
     public String createMessageFinal() {
         String response;
-        response = createMessage() + CRLF + CRLF;
+        response = createMessage()  + CRLF + CRLF;
         return response;
     }
 

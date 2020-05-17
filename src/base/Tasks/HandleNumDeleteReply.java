@@ -5,12 +5,12 @@ import base.messages.BaseMessage;
 import base.messages.ChunkReplyMessage;
 import base.messages.MessageChunkNo;
 
-public class HandleDeleteReply implements Runnable {
+public class HandleNumDeleteReply implements Runnable {
 
     private ChunkReplyMessage msg_dreply;
 
-    public  HandleDeleteReply(String[] msg) {
-        msg_dreply = new ChunkReplyMessage(msg);
+    public HandleNumDeleteReply(ChunkReplyMessage msg) {
+        msg_dreply = msg;
     }
 
 
