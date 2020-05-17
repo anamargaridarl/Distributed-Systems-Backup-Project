@@ -27,42 +27,45 @@ public class HandleInitiatorChunks implements Runnable {
         this.filename = filename;
     }
 
-    private void noMoreChunks()
-    {
+    /*
+    private void noMoreChunks() {
         TaskLogger.noChunkReceivedFail();
         Peer.getStorageManager().removeRestoredChunkData(file_id);
         Peer.getStorageManager().removeRestoreRequest(file_id, Peer.getID());
         return;
-    }
+    }*/
 
     @Override
     public void run() {
-        //case of error (chunks is not received)
-        if (!Peer.getStorageManager().checkReceiveChunk(file_id, i)) {
+        if (i == 0 || i < Peer.getStorageManager().getRestoreChunkNum(file_id)) {
+        /*if (!Peer.getStorageManager().checkReceiveChunk(file_id, i)) {
             noMoreChunks();
             return;
-        }
-        i += 1;
-        if (Peer.getStorageManager().checkLastChunk(file_id)) {
-            try {
-                Peer.getStorageManager().restoreFile(filename, file_id, i);
-            } catch (IOException e) {
-                TaskLogger.restoreFileFail();
-            }
-            return;
-        }
+        }*/
 
-        //TODO: use CHORD to get peer holding the chunk and create socket
-        try {
-            client_socket = Peer.getChunkSocket(file_id, i);
+            if (i == Peer.getStorageManager().getRestoreChunkNum(file_id)) {
+                try {
+                    Peer.getStorageManager().restoreFile(filename, file_id, Peer.getStorageManager().getRestoreChunkNum(file_id));
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+            }
+
+
+            //TODO: use CHORD to get peer holding the chunk and create socket
+            i = i + 1;
+            try {
+                client_socket = Peer.getChunkSocket(file_id, i);
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i, client_socket);
             Peer.getTaskManager().execute(manage_getchunk);
             Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), MAX_DELAY_STORED, TimeUnit.MILLISECONDS);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
+        }
     }
 }

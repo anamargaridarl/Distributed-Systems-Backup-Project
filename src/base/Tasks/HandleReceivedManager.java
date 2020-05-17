@@ -74,11 +74,11 @@ public class HandleReceivedManager implements Runnable {
     }
 
     private void handleGetChunkSuc() {
-        Peer.getTaskManager().execute(new HandleGetChunkSuc(msg_header,client_socket));
+        Peer.getTaskManager().execute(new HandleForwardGet(msg_header,client_socket));
     }
 
     private void handleSucInfo() {
-        Peer.getTaskManager().execute(new HandleInfoSuc(msg_header,client_socket));
+        Peer.getTaskManager().execute(new HandleGetToIdeal(msg_header,client_socket));
     }
 
     private void handleDeleteReply() {

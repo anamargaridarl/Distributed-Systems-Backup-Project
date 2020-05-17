@@ -5,12 +5,12 @@ import base.messages.MessageChunkNo;
 
 import java.net.Socket;
 
-public class HandleGetChunkSuc implements Runnable {
+public class HandleForwardGet implements Runnable {
 
     private final MessageChunkNo getchunk_message;
     private Socket client_socket;
 
-    public HandleGetChunkSuc(String[] message, Socket client_socket) {
+    public HandleForwardGet(String[] message, Socket client_socket) {
         getchunk_message = new MessageChunkNo(message);
         this.client_socket = client_socket;
     }
@@ -20,7 +20,7 @@ public class HandleGetChunkSuc implements Runnable {
 
         if(Peer.getStorageManager().existsChunkRestore(getchunk_message.getFileId(),getchunk_message.getNumber()))
         {
-            Peer.getTaskManager().execute(new ManageInfoSuc(1,client_socket));
+            Peer.getTaskManager().execute(new ManageGetToIdeal(1,getchunk_message.getFileId(),getchunk_message.getNumber(),client_socket));
         }
     }
 }

@@ -24,8 +24,6 @@ import static java.lang.Thread.sleep;
 
 public class Peer extends UnicastRemoteObject implements PeerInterface {
 
-    public static int deletechunks = 0;
-    public static int restorechunks = 0;
     //add methods to access storage and save/load data
     private static String version;
     private static int peer_id;
@@ -131,23 +129,8 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         String[] parts = pathname.split("/");
         String filename = parts[parts.length - 1];
 
-        Integer id = getID();
-        getStorageManager().addRestoreRequest(file_id, id);
-        int i = 0;
         //TODO: use CHORD to lookup peers that hold the chunk and create socket
-        Socket taskSocket = null;
-        try {
-            taskSocket = getChunkSocket(file_id, i);
-            ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i,taskSocket);
-            getTaskManager().execute(manage_getchunk);
-            //TODO: use the created socket to pass it to the task
-            Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), MAX_DELAY_STORED, TimeUnit.MILLISECONDS);
-
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Peer.getTaskManager().schedule(new HandleInitiatorChunks(0, version, file_id, peer_id, filename), MAX_DELAY_STORED, TimeUnit.MILLISECONDS);
 
         return 0;
     }
@@ -166,7 +149,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         }
 
         //TODO: use CHORD to lookup peers that have the chunk and create sockets
-        getTaskManager().execute(new HandleInitiatorDelete(0,version, file_id, peer_id));
+        getTaskManager().execute(new HandleInitiatorDelete(0, version, file_id, peer_id));
         return 0;
     }
 
