@@ -170,7 +170,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     }
 
     //TODO: use CHORD to lookup peers that have the chunk and create sockets
-    getTaskManager().execute(new HandleInitiatorDelete(0, version, file_id, peer_id));
+    getTaskManager().execute(new HandleInitiatorDelete( version, file_id, peer_id));
     return 0;
   }
 

@@ -7,7 +7,7 @@ import base.messages.MessageChunkNo;
 
 public class HandleNumDeleteReply implements Runnable {
 
-    private ChunkReplyMessage msg_dreply;
+    private final ChunkReplyMessage msg_dreply;
 
     public HandleNumDeleteReply(ChunkReplyMessage msg) {
         msg_dreply = msg;

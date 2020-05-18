@@ -22,7 +22,7 @@ public class StorageManager implements java.io.Serializable {
   private final ArrayList<FileInformation> files_info;
   private final ArrayList<ChunkInfo> chunks_info;
   private final ConcurrentHashMap<String, Integer> rep_degrees;
-  private final ArrayList<String> delete_requests = new ArrayList<>();
+  private final HashSet<String> delete_requests = new HashSet<>();
 
   //store "STORED MESSAGES" occurrences from distinct senders (by their id)
   private final ConcurrentHashMap<String, InetSocketAddress> stored_senders = new ConcurrentHashMap<>();
@@ -141,18 +141,17 @@ public class StorageManager implements java.io.Serializable {
     }
   }
 
-  public synchronized void handleDeleteSucessors(String file_id, int number) throws IOException {
+  public synchronized void handleDeleteSuccessors(String file_id, int number) throws IOException {
     String chunk_ref = makeChunkRef(file_id, number);
     Set<InetSocketAddress> suc = successors_stored_senders.get(chunk_ref);
     if(suc == null)
       return;
-
-    for(InetSocketAddress s: suc) {
-        Socket socket = createSocket(s);
-        Peer.getTaskManager().execute(new ManageDeleteFile("1.0",1,file_id,number,socket));
-        Peer.getTaskManager().execute(new MessageReceiver(socket));
+    for (InetSocketAddress peer : suc) {
+      Socket socket = createSocket(peer);
+      Peer.getTaskManager().execute(new ManageDeleteFile(VANILLA_VERSION, NOT_INITIATOR, file_id, number, socket));
     }
 
+    successors_stored_senders.remove(chunk_ref);
   }
 
   public boolean existsChunk(ChunkInfo chunk) {
@@ -166,9 +165,11 @@ public class StorageManager implements java.io.Serializable {
 
   //delete functions
   public void addDeleteRequest(String fileId) {
-    if (!delete_requests.contains(fileId)) {
-      delete_requests.add(fileId);
-    }
+    delete_requests.add(fileId);
+  }
+
+  public HashSet<String> getDeleteRequests() {
+    return delete_requests;
   }
 
   public synchronized void deleteChunks(String file_id, int chunk_no) {
@@ -450,15 +451,11 @@ public class StorageManager implements java.io.Serializable {
 
 
   public int getDeleteChunkNum(String file_id) {
-    if (delete_chunk_num.contains(file_id))
-      return delete_chunk_num.get(file_id);
-    else
-      return -1;
+    return delete_chunk_num.getOrDefault(file_id,-1);
   }
 
   public void addDeleteChunkNo(String file_id,int num) {
-    if (!delete_chunk_num.contains(file_id))
-      delete_chunk_num.put(file_id,num);
+      delete_chunk_num.putIfAbsent(file_id,num);
   }
   //end save information when peer is off functions
 }
