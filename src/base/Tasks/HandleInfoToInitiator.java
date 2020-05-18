@@ -4,24 +4,30 @@ import base.Peer;
 import base.messages.InfoMessage;
 import base.messages.MessageChunkNo;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+
+import static base.Clauses.createSocket;
 
 public class HandleInfoToInitiator implements Runnable{
 
 
     private InfoMessage info_message;
-    private Socket client_socket;
 
-    public HandleInfoToInitiator(InfoMessage message, Socket client_socket) {
+    public HandleInfoToInitiator(InfoMessage message) {
         info_message = message;
-        this.client_socket = client_socket;
     }
 
     @Override
     public void run() {
-        //create socket with info
-        //send getchunk
-        //Peer.getTaskManager().execute(new ManageGetChunk("1.0",1,file_id,chunk_no,client_socket));
+        try {
+            Socket socket = createSocket(info_message.getAddress());
+            Peer.getTaskManager().execute(new ManageGetChunk(info_message.getVersion(),info_message.getSenderId(),info_message.getFileId(),info_message.getNumber(),socket));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 
     }
 }

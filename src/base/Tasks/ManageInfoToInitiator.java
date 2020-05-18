@@ -4,15 +4,17 @@ import base.Peer;
 import base.channel.MessageSender;
 import base.messages.InfoMessage;
 
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import static base.Clauses.REPLYINFOINITIATOR;
 
 public class ManageInfoToInitiator implements Runnable {
 
     private InfoMessage info_message;
     private Socket client_socket;
 
-    public ManageInfoToInitiator(String address, int port, Socket client_socket) {
-        this.info_message = new InfoMessage(address,port);
+    public ManageInfoToInitiator(String version, int sender_id, String file_id, int num, InetSocketAddress address, Socket client_socket) {
+        this.info_message = new InfoMessage(version,REPLYINFOINITIATOR,sender_id,file_id,num,address);
         this.client_socket = client_socket;
     }
 

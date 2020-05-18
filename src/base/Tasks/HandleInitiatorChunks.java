@@ -41,7 +41,6 @@ public class HandleInitiatorChunks implements Runnable {
                 }
             }
 
-
             //TODO: use CHORD to get peer holding the chunk and create socket
             try {
                 client_socket = Peer.getChunkSocket(file_id, i);

@@ -182,22 +182,28 @@ public class StorageManager implements java.io.Serializable {
     }
 
     public synchronized InetSocketAddress handleGetChunk(MessageChunkNo msg) throws IOException {
+
         String chunk_ref = makeChunkRef(msg.getFileId(), msg.getNumber());
         Set<InetSocketAddress> succ = successors_stored_senders.get(chunk_ref);
-        Set<InetSocketAddress> add_set = null;
+        Set<InetSocketAddress> add_set = new HashSet<>();
 
-
-        if (restore_senders.contains(chunk_ref)) {
-            add_set = restore_senders.get(chunk_ref);
-            restore_senders.remove(chunk_ref);
-        }
+        add_set = restore_senders.getOrDefault(chunk_ref, null);
 
         for (InetSocketAddress s : succ) {
-            if (!add_set.contains(s)) {
+            if (add_set == null) {
+                add_set = new HashSet<>();
                 add_set.add(s);
                 restore_senders.put(chunk_ref, add_set);
                 return s;
+            } else if (!add_set.contains(s)) {
+                add_set.add(s);
+                if (restore_senders != null && restore_senders.contains(chunk_ref)) {
+                    restore_senders.remove(chunk_ref);
+                }
+                restore_senders.put(chunk_ref, add_set);
+                return s;
             }
+
         }
         return null;
     }
@@ -423,7 +429,6 @@ public class StorageManager implements java.io.Serializable {
         Map<Integer, byte[]> chunks = restored_files.get(fileid);
         FileOutputStream file_to_write = new FileOutputStream(file);
 
-        System.out.println("size saved chunks:" + chunks.size());
 
         for (int i = 0; i < number_chunks; i++) {
             file_to_write.write(chunks.get(i));
@@ -509,7 +514,7 @@ public class StorageManager implements java.io.Serializable {
     }
 
     public int getRestoreChunkNum(String file_id) {
-        return restore_chunk_num.getOrDefault(file_id,-1);
+        return restore_chunk_num.getOrDefault(file_id, -1);
     }
 
     public int getDeleteChunkNum(String file_id) {
@@ -533,15 +538,14 @@ public class StorageManager implements java.io.Serializable {
             succ_info.put(chunk_ref, address);
     }
 
-    public void addRestoreChunkNo(String file_id,int num) {
+    public void addRestoreChunkNo(String file_id, int num) {
         restore_chunk_num.putIfAbsent(file_id, num);
     }
 
-    public void addDeleteChunkNo(String file_id,int num) {
+    public void addDeleteChunkNo(String file_id, int num) {
         if (!delete_chunk_num.contains(file_id))
-            delete_chunk_num.put(file_id,num);
+            delete_chunk_num.put(file_id, num);
     }
-
 
 
     //end save information when peer is off functions
