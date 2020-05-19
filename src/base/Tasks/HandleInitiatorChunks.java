@@ -48,7 +48,7 @@ public class HandleInitiatorChunks implements Runnable {
                 UUID hash = hashChunk(file_id,i);
                 Integer hashKey = getHashKey(hash);
                 Integer allocatedPeer = checkAllocated(hashKey); //TODO: dont use this version of the function
-                InetSocketAddress idealPeer = chord.get((allocatedPeer-1)*3); //TODO: fix value when putting together
+                InetSocketAddress idealPeer = chord.get((allocatedPeer-1)*2); //TODO: fix value when putting together
                 client_socket = createSocket(idealPeer);
             } catch (NoSuchAlgorithmException | IOException e) {
                 e.printStackTrace();
@@ -57,7 +57,7 @@ public class HandleInitiatorChunks implements Runnable {
             ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i, client_socket);
             Peer.getTaskManager().execute(manage_getchunk);
             i = i + 1;
-            Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), 1500, TimeUnit.MILLISECONDS);
+            Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), 2000, TimeUnit.MILLISECONDS);
 
         }
     }

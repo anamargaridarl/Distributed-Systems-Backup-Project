@@ -26,6 +26,7 @@ public class HandleReceivedManager implements Runnable {
     @Override
     public void run() {
         try {
+           //System.out.println(type + " " + ((BaseMessage) msg).getSenderId());
             switch (type) {
                 case PUTCHUNK:
                     handlePutChunk();
@@ -33,7 +34,8 @@ public class HandleReceivedManager implements Runnable {
                 case STORED:
                     handleStored();
                     break;
-                case DECLINED: //TODO: check if any handling is necessary with this message
+                case DECLINED:
+                    handleDeclined();
                     break;
                 case GETCHUNK:
                     handleGetChunk();
@@ -49,6 +51,9 @@ public class HandleReceivedManager implements Runnable {
                     break;
                 case REMOVED:
                     handleRemovedChunk();
+                    break;
+                case SUCCGETCHUNK:
+                    handleSuccGetChunk();
                     break;
                 case NUMREPLY:
                     handleNumDeleteReply();
@@ -108,6 +113,11 @@ public class HandleReceivedManager implements Runnable {
         Peer.getTaskManager().execute(new HandleStored(stored));
     }
 
+    private void handleDeclined() {
+        MessageChunkNo declined = (MessageChunkNo) msg;
+        Peer.getTaskManager().execute(new HandleDeclined(declined));
+    }
+
     private void handleGetChunk() {
         MessageChunkNo getChunk = (MessageChunkNo) msg;
         Peer.getTaskManager().execute(new HandleGetChunk(getChunk, client_socket));
@@ -131,6 +141,11 @@ public class HandleReceivedManager implements Runnable {
     private void handleRemovedChunk() {
         MessageChunkNo removedChunk = (MessageChunkNo) msg;
         Peer.getTaskManager().execute(new HandleRemovedChunk(removedChunk));
+    }
+
+    private void handleSuccGetChunk() {
+        MessageChunkNo succGetChunk = (MessageChunkNo) msg;
+        Peer.getTaskManager().execute(new HandleSuccGetChunk(succGetChunk,client_socket));
     }
 }
 

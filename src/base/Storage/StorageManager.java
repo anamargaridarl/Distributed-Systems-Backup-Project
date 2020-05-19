@@ -103,6 +103,8 @@ public class StorageManager implements java.io.Serializable {
     if (successors_stored_senders.containsKey(chunk_ref)) {
       successors_stored_senders.get(chunk_ref).remove(inetSocketAddress);
       decrementRepDegree(fileId, number);
+    } else if(stored_senders.containsKey(chunk_ref)) {
+      decrementRepDegree(fileId,number);
     }
   }
 
@@ -153,6 +155,18 @@ public class StorageManager implements java.io.Serializable {
 
   //backup-stored
 
+  public synchronized InetSocketAddress getSuccGetChunk(MessageChunkNo msg) {
+    String chunk_ref = makeChunkRef(msg.getFileId(),msg.getNumber());
+    if(successors_stored_senders.containsKey(chunk_ref)) {
+      Set<InetSocketAddress> succ = successors_stored_senders.get(chunk_ref);
+      for(InetSocketAddress host : succ) {
+        return host;
+      }
+      return null;
+    } else {
+      return stored_senders.getOrDefault(chunk_ref,null);
+    }
+  }
 
   public synchronized InetSocketAddress handleGetChunk(MessageChunkNo msg) throws IOException {
 
@@ -254,6 +268,8 @@ public class StorageManager implements java.io.Serializable {
           break;
         }
       }
+    } else {
+      return true;
     }
     return false;
   }
@@ -373,6 +389,12 @@ public class StorageManager implements java.io.Serializable {
       return chunk.get(chunk_no) != null;
     }
     return false;
+  }
+  public byte[] getRestoredChunk (String file_id,Integer chunk_no) {
+    if(restored_files.containsKey(file_id)) {
+      return restored_files.get(file_id).getOrDefault(chunk_no,null);
+    }
+    return null;
   }
 
   public boolean checkLastChunk(String file_id) {

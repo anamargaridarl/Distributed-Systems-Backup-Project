@@ -32,7 +32,7 @@ public class ManageRemoveChunk implements Runnable {
         Peer.getTaskManager().execute(new ManageBackupAuxiliar(removedChunk, removedChunk.getChunk()));
       } else {
         MessageChunkNo removedMsg = new MessageChunkNo(VANILLA_VERSION, REMOVED, Peer.getID(), removedChunk.getFileId(), removedChunk.getNumber());
-        InetSocketAddress idealPeer = chord.get((allocated-1)*3); //TODO: replace with CHORD methods to obtain peer address
+        InetSocketAddress idealPeer = chord.get((allocated-1)*2); //TODO: replace with CHORD methods to obtain peer address
         Socket peerSocket = createSocket(idealPeer);
         Peer.getTaskManager().execute(new MessageSender(peerSocket, removedMsg));
       }
