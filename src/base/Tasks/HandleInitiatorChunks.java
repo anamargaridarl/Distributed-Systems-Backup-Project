@@ -5,11 +5,13 @@ import base.TaskLogger;
 import base.channel.MessageReceiver;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static base.Clauses.MAX_DELAY_STORED;
+import static base.Clauses.*;
 
 public class HandleInitiatorChunks implements Runnable {
 
@@ -43,10 +45,12 @@ public class HandleInitiatorChunks implements Runnable {
 
             //TODO: use CHORD to get peer holding the chunk and create socket
             try {
-                client_socket = Peer.getChunkSocket(file_id, i);
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
+                UUID hash = hashChunk(file_id,i);
+                Integer hashKey = getHashKey(hash);
+                Integer allocatedPeer = checkAllocated(hashKey); //TODO: dont use this version of the function
+                InetSocketAddress idealPeer = chord.get((allocatedPeer-1)*40); //TODO: fix value when putting together
+                client_socket = createSocket(idealPeer);
+            } catch (NoSuchAlgorithmException | IOException e) {
                 e.printStackTrace();
             }
 

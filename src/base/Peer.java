@@ -80,7 +80,6 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         Integer hashKey = getHashKey(hash);
         Integer peerID = allocatePeer(hashKey);
         InetSocketAddress peerHost = chord.get(peerID);
-        System.out.println("peerhost:" + peerHost);
         return createSocket(peerHost);
     }
 

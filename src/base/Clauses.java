@@ -50,6 +50,17 @@ public class Clauses {
     chord.put(40, obj1);
     chord.put(80, obj2);
   }
+
+  //checks what peer id is supposed to be assigned (TESTING)
+  public static Integer checkAllocated(Integer hashKey) {
+    if (hashKey >= 80) {
+      return 3;
+    } else if (hashKey >= 40) {
+      return 2;
+    } else
+      return 1;
+  }
+
   /***/
 
   public static String makeChunkRef(String file_id, int number) {
