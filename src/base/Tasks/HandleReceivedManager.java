@@ -19,7 +19,7 @@ public class HandleReceivedManager implements Runnable {
 
   public HandleReceivedManager(Object msg, Socket c_socket) {
     this.msg = msg;
-    this.type = ((BaseMessage)msg).getType();
+    this.type = ((BaseMessage) msg).getType();
     this.client_socket = c_socket;
   }
 
@@ -90,7 +90,7 @@ public class HandleReceivedManager implements Runnable {
 
   private void handleDeleteFile() {
     MessageChunkNo deleteFile = (MessageChunkNo) msg;
-    Peer.getTaskManager().execute(new HandleDeleteFile(deleteFile,client_socket));
+    Peer.getTaskManager().execute(new HandleDeleteFile(deleteFile, client_socket));
   }
 
   private void handleAskDelete() {

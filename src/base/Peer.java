@@ -5,7 +5,6 @@ import base.Storage.StorageManager;
 import base.Tasks.*;
 import base.channel.MessageListener;
 
-import javax.swing.text.BadLocationException;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -14,10 +13,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import static base.Clauses.*;
 import static java.lang.Thread.sleep;
@@ -170,7 +167,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
     }
 
     //TODO: use CHORD to lookup peers that have the chunk and create sockets
-    getTaskManager().execute(new HandleInitiatorDelete( version, file_id, peer_id));
+    getTaskManager().execute(new HandleInitiatorDelete(file_id));
     return 0;
   }
 

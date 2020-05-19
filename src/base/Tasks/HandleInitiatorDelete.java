@@ -1,9 +1,9 @@
 package base.Tasks;
 
 import base.Peer;
-import base.TaskLogger;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
@@ -13,14 +13,10 @@ import static base.Clauses.*;
 
 public class HandleInitiatorDelete implements Runnable{
     private int i;
-    private final String version;
     private final String file_id;
-    private final Integer peer_id;
 
-    public HandleInitiatorDelete(String version, String file_id, Integer peer_id) {
-        this.version = version;
+    public HandleInitiatorDelete(String file_id) {
         this.file_id = file_id;
-        this.peer_id = peer_id;
         this.i = 0;
     }
 
@@ -32,10 +28,11 @@ public class HandleInitiatorDelete implements Runnable{
                 int hashKey = getHashKey(hash);
                 int allocatedPeer = checkAllocated(hashKey);
                 if(allocatedPeer == Peer.getID()) {
-
+                    Peer.getTaskManager().execute(new HandleDeleteFile(file_id,i));
                 } else {
-                    Socket client_socket = Peer.getChunkSocket(file_id, i); //TODO: fix get ideal / use allocated / check if doesnt belong to own peer
-                    Peer.getTaskManager().execute(new ManageDeleteFile(version, peer_id, file_id, i , client_socket));
+                    InetSocketAddress idealPeer = chord.get((allocatedPeer -1) *3); //TODO: replace with CHORD lookup for peer key
+                    Socket client_socket = createSocket(idealPeer);
+                    Peer.getTaskManager().execute(new ManageDeleteFile(VANILLA_VERSION, Peer.getID(), file_id, i , client_socket));
                 }
                 i++;
                 Peer.getTaskManager().schedule(this, TIMEOUT, TimeUnit.MILLISECONDS);
