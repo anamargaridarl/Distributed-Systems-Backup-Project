@@ -180,6 +180,14 @@ public class StorageManager implements java.io.Serializable {
         return null;
     }
 
+  public void addDeleteRequest(String fileId) {
+    if (!delete_requests.contains(fileId)) {
+      delete_requests.add(fileId);
+    }
+  }
+  public ArrayList<String> getDeleteRequests() {
+    return delete_requests;
+  }
   public synchronized void deleteChunks(String file_id, int chunk_no) {
     for (Iterator<ChunkInfo> iter = chunks_info.iterator(); iter.hasNext(); ) {
       ChunkInfo chunkInfo = iter.next();
@@ -207,6 +215,7 @@ public class StorageManager implements java.io.Serializable {
         return chunkInfo.getNumber_chunks();
       }
     }
+    return -1;
   }
 
   private void removeChunkFile(String file_id, int chunk_number) {
@@ -219,26 +228,6 @@ public class StorageManager implements java.io.Serializable {
     }
   }
 
-    public int getNumChunk(String file_id, int chunk_no) {
-        for (Iterator<ChunkInfo> iter = chunks_info.iterator(); iter.hasNext(); ) {
-            ChunkInfo chunkInfo = iter.next();
-            if (chunkInfo.validateChunk(file_id, chunk_no)) {
-                return chunkInfo.getNumber_chunks();
-            }
-        }
-        return -1;
-    }
-
-    private void removeChunkFile(String file_id, int chunk_number) {
-        String chunk_filename = Peer.getID() + "_STORAGE" + "/" + file_id + ":" + chunk_number;
-        File chunk = new File(chunk_filename);
-
-        if (chunk.delete()) {
-            StorageLogger.removeChunkOk();
-        } else {
-            StorageLogger.removeChunkFail();
-        }
-    }
 
     //end delete functions
 
@@ -301,7 +290,7 @@ public class StorageManager implements java.io.Serializable {
         total_space = new_space;
     }
 
-    public ChunkInfo removeExpendableChunk() {
+    public ChunkInfo removeExpendableChunk() throws IOException {
         ChunkInfo expandable = null;
         for (ChunkInfo chunk : chunks_info) { //check if there is any disposable chunk with more than enough replicas
             if (chunk.getRepDeg() < getChunkRepDegree(chunk.getFileId(), chunk.getNumber())) {

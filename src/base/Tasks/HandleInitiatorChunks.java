@@ -48,7 +48,7 @@ public class HandleInitiatorChunks implements Runnable {
                 UUID hash = hashChunk(file_id,i);
                 Integer hashKey = getHashKey(hash);
                 Integer allocatedPeer = checkAllocated(hashKey); //TODO: dont use this version of the function
-                InetSocketAddress idealPeer = chord.get((allocatedPeer-1)*40); //TODO: fix value when putting together
+                InetSocketAddress idealPeer = chord.get((allocatedPeer-1)*3); //TODO: fix value when putting together
                 client_socket = createSocket(idealPeer);
             } catch (NoSuchAlgorithmException | IOException e) {
                 e.printStackTrace();

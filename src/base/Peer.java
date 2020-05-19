@@ -162,22 +162,22 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
   @Override
   public int reclaim(int max_space) throws IOException {
     if (max_space < Peer.getStorageManager().getOccupiedSpace() * KB) {
-      while (Peer.getStorageManager().getOccupiedSpace() * KB > max_space) {
-        ChunkInfo removed = Peer.getStorageManager().removeExpendableChunk();
-        PeerLogger.removedChunk(removed.getFileId(), removed.getNumber());
-        Peer.getTaskManager().execute(new ManageRemoveChunk(removed));
-      }
-      if (max_space == 0) {
-        Peer.getStorageManager().emptyChunksInfo();
-      }
+        while (Peer.getStorageManager().getOccupiedSpace() * KB > max_space) {
+            ChunkInfo removed = Peer.getStorageManager().removeExpendableChunk();
+            PeerLogger.removedChunk(removed.getFileId(), removed.getNumber());
+            Peer.getTaskManager().execute(new ManageRemoveChunk(removed));
+        }
+        if (max_space == 0) {
+            Peer.getStorageManager().emptyChunksInfo();
+        }
+    }
 
         Peer.getStorageManager().setTotalSpace(max_space);
         PeerLogger.reclaimComplete(Peer.getStorageManager().getTotalSpace(), Peer.getStorageManager().getOccupiedSpace());
         return 0;
     }
 
-    @Override
-    public List<String> state() throws RemoteException {
+      public List<String> state() throws RemoteException {
         List<String> state_report = new ArrayList<>();
         int i = 1;
         state_report.add("Peer id: " + Peer.getID() + " status report:");
