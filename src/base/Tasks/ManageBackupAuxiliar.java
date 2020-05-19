@@ -2,6 +2,7 @@ package base.Tasks;
 
 import base.ChunkInfo;
 import base.Peer;
+import base.TaskLogger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -49,9 +50,11 @@ public class ManageBackupAuxiliar implements Runnable {
           e.printStackTrace();
         }
       }
-      Peer.getTaskManager().schedule(this, TIMEOUT, TimeUnit.MILLISECONDS);
+      Peer.getTaskManager().schedule(this, 2*TIMEOUT, TimeUnit.MILLISECONDS);
     } else if(initiatorSocket != null) {
       Peer.getTaskManager().execute(new ManageStored(Peer.getVersion(),currRep,chunkInfo.getFileId(),chunkInfo.getNumber(),initiatorSocket));
+    } else if(nSuccsTried> 0 && succNeeded == 0){
+      TaskLogger.putChunkOk();
     }
   }
 }
