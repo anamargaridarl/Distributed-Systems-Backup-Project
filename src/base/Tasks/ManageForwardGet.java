@@ -7,7 +7,7 @@ import base.messages.MessageChunkNo;
 
 import java.net.Socket;
 
-import static base.Clauses.GETCHUNK;
+import static base.Clauses.*;
 
 public class ManageForwardGet implements Runnable {
 
@@ -15,7 +15,7 @@ public class ManageForwardGet implements Runnable {
     private final Socket client_socket;
 
     public ManageForwardGet(String version, int sender_id, String file_id, int i, Socket client) {
-        this.getchunk_message = new MessageChunkNo(version, GETCHUNK, sender_id, file_id, i);
+        this.getchunk_message = new MessageChunkNo(version, FORWARDGET, sender_id, file_id, i);
         this.client_socket = client;
     }
 

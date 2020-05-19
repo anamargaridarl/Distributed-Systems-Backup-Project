@@ -24,7 +24,6 @@ public class ManageGetChunk implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("managaegetchunk");
         Peer.getTaskManager().execute(new MessageSender(client_socket,getchunk_message));
         Peer.getTaskManager().execute(new MessageReceiver(client_socket));
     }

@@ -70,17 +70,6 @@ public class StorageManager implements java.io.Serializable {
         rep_degrees = new ConcurrentHashMap<>();
     }
 
-    public InetSocketAddress getLastSucInfo(String fileId, int chunkNo) {
-        String chunkref = makeChunkRef(fileId, chunkNo);
-        Set<InetSocketAddress> senders = restore_senders.get(chunkref);
-        final Iterator itr = senders.iterator();
-        Object lastElement = itr.next();
-        while (itr.hasNext()) {
-            lastElement = itr.next();
-        }
-        return (InetSocketAddress) lastElement;
-    }
-
 
     //shared functions
     public byte[] getChunkData(String file_id, int number) throws IOException {
@@ -526,16 +515,12 @@ public class StorageManager implements java.io.Serializable {
 
     public InetSocketAddress getSuccInfo(String file_id, int chunkNo) {
         String chunk_ref = makeChunkRef(file_id, chunkNo);
-        if (succ_info.contains(chunk_ref))
-            return succ_info.get(chunk_ref);
-        else
-            return null;
+        return succ_info.getOrDefault(chunk_ref,null);
     }
 
     public void addSuccInfo(String fileId, int chunkNo, InetSocketAddress address) {
         String chunk_ref = makeChunkRef(fileId, chunkNo);
-        if (!succ_info.contains(chunk_ref))
-            succ_info.put(chunk_ref, address);
+        succ_info.putIfAbsent(chunk_ref,address);
     }
 
     public void addRestoreChunkNo(String file_id, int num) {

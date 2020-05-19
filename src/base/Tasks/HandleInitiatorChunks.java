@@ -32,10 +32,10 @@ public class HandleInitiatorChunks implements Runnable {
     public void run() {
         if (i == 0 || i <= Peer.getStorageManager().getRestoreChunkNum(file_id)) {
 
-
             if (i == Peer.getStorageManager().getRestoreChunkNum(file_id)  && i != 0) {
                 try {
                     Peer.getStorageManager().restoreFile(filename, file_id, Peer.getStorageManager().getRestoreChunkNum(file_id));
+                    return;
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
                 }
@@ -53,7 +53,7 @@ public class HandleInitiatorChunks implements Runnable {
             ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i, client_socket);
             Peer.getTaskManager().execute(manage_getchunk);
             i = i + 1;
-            Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), MAX_DELAY_STORED, TimeUnit.MILLISECONDS);
+            Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), 1500, TimeUnit.MILLISECONDS);
 
         }
     }

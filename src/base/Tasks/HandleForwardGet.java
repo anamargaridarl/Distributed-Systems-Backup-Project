@@ -17,8 +17,6 @@ public class HandleForwardGet implements Runnable {
 
     @Override
     public void run() {
-
-        System.out.println("received forward");
         if (Peer.getStorageManager().existsChunkRestore(getchunk_message.getFileId(), getchunk_message.getNumber())) {
             Peer.getTaskManager().execute(new ManageGetToIdeal(1, getchunk_message.getFileId(), getchunk_message.getNumber(), client_socket));
         } else

@@ -53,6 +53,12 @@ public class HandleReceivedManager implements Runnable {
                 case NUMREPLY:
                     handleNumDeleteReply();
                     break;
+                case FORWARDGET:
+                    handleForwardGet();
+                    break;
+                case GETTOIDEAL:
+                    handleGetToIdeal();
+                    break;
                 case REPLYINFOINITIATOR:
                     handleReplyInfoInitiator();
                     break;
@@ -75,7 +81,7 @@ public class HandleReceivedManager implements Runnable {
 
 
     private void handleGetToIdeal() {
-        ForwardGetMessage infoinitiator = (ForwardGetMessage) msg;
+        StatePeerMessage infoinitiator = (StatePeerMessage) msg;
         Peer.getTaskManager().execute(new HandleGetToIdeal(infoinitiator, client_socket));
     }
 
