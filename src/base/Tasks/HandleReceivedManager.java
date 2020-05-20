@@ -74,6 +74,7 @@ public class HandleReceivedManager implements Runnable {
         }
     }
 
+  
     private void handleReplyInfoInitiator() {
         InfoMessage infoinitiator = (InfoMessage) msg;
         Peer.getTaskManager().execute(new HandleInfoToInitiator(infoinitiator));
@@ -90,7 +91,6 @@ public class HandleReceivedManager implements Runnable {
         MessageChunkNo infoinitiator = (MessageChunkNo) msg;
         Peer.getTaskManager().execute(new HandleForwardGet(infoinitiator, client_socket));
     }
-
 
     private void handleNumDeleteReply() {
         ChunkReplyMessage numReply = (ChunkReplyMessage) msg;

@@ -23,6 +23,7 @@ public class ManageDeleteFile implements Runnable {
         if (msg_delete.getVersion().equals(ENHANCED_VERSION))
             Peer.getStorageManager().addDeleteRequest(msg_delete.getFileId());
         Peer.getTaskManager().execute(new MessageSender(client_socket,msg_delete));
-        Peer.getTaskManager().execute(new MessageReceiver(client_socket));
+        if(msg_delete.getNumber() == 0)
+            Peer.getTaskManager().execute(new MessageReceiver(client_socket));
     }
 }

@@ -9,13 +9,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 
 public class MessageReceiver implements Runnable {
-  private static ConcurrentHashMap<Socket,ObjectInputStream> inStreams;
+  private static final ConcurrentHashMap<Socket,ObjectInputStream> inStreams = new ConcurrentHashMap<>();
   private final Socket client_socket;
 
   public MessageReceiver(Socket c_socket) {
     client_socket = c_socket;
-    if(inStreams == null)
-      inStreams = new ConcurrentHashMap<>();
   }
 
   @Override

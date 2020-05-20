@@ -6,14 +6,13 @@ import base.messages.BaseMessage;
 
 import java.net.UnknownHostException;
 
-import static base.Clauses.ASKDELETE;
 
 public class ManageDeleteOffline implements Runnable {
 
     BaseMessage delete_message;
 
     public ManageDeleteOffline(String v, int sid) {
-        delete_message = new BaseMessage(v, ASKDELETE, sid);
+        //delete_message = new BaseMessage(v, ASKDELETE, sid);
     }
 
     @Override

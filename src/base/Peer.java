@@ -5,7 +5,6 @@ import base.Storage.StorageManager;
 import base.Tasks.*;
 import base.channel.MessageListener;
 
-import javax.swing.text.BadLocationException;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -14,7 +13,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -153,30 +151,28 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             return -1;
         }
 
-        //TODO: use CHORD to lookup peers that have the chunk and create sockets
-        getTaskManager().execute(new HandleInitiatorDelete(0, version, file_id, peer_id));
-        return 0;
+
+    //TODO: use CHORD to lookup peers that have the chunk and create sockets
+    getTaskManager().execute(new HandleInitiatorDelete(file_id));
+    return 0;
+  }
+
+  @Override
+  public int reclaim(int max_space) throws IOException {
+    if (max_space < Peer.getStorageManager().getOccupiedSpace() * KB) {
+      while (Peer.getStorageManager().getOccupiedSpace() * KB > max_space) {
+        ChunkInfo removed = Peer.getStorageManager().removeExpendableChunk();
+        PeerLogger.removedChunk(removed.getFileId(), removed.getNumber());
+        Peer.getTaskManager().execute(new ManageRemoveChunk(removed));
+      }
+      if (max_space == 0) {
+        Peer.getStorageManager().emptyChunksInfo();
+      }
     }
-
-
-    @Override
-    public int reclaim(int max_space) throws RemoteException {
-        if (max_space < Peer.getStorageManager().getOccupiedSpace() * KB) {
-            while (Peer.getStorageManager().getOccupiedSpace() * KB > max_space) {
-                ChunkInfo removed = Peer.getStorageManager().removeExpendableChunk();
-                PeerLogger.removedChunk(removed.getFileId(), removed.getNumber());
-                Peer.getTaskManager().execute(new ManageRemoveChunk(Peer.version, REMOVED, Peer.getID(), removed.getFileId(), removed.getNumber()));
-            }
-            if (max_space == 0) {
-                Peer.getStorageManager().emptyChunksInfo();
-            }
-        }
-
-        Peer.getStorageManager().setTotalSpace(max_space);
-        PeerLogger.reclaimComplete(Peer.getStorageManager().getTotalSpace(), Peer.getStorageManager().getOccupiedSpace());
-        return 0;
-    }
-
+Peer.getStorageManager().setTotalSpace(max_space);
+    PeerLogger.reclaimComplete(Peer.getStorageManager().getTotalSpace(), Peer.getStorageManager().getOccupiedSpace());
+    return 0;
+  }
     @Override
     public List<String> state() throws RemoteException {
         List<String> state_report = new ArrayList<>();
