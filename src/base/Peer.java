@@ -5,7 +5,6 @@ import base.Storage.StorageManager;
 import base.Tasks.*;
 import base.channel.MessageListener;
 
-import javax.swing.text.BadLocationException;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -14,7 +13,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -153,11 +151,11 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             return -1;
         }
 
-        //TODO: use CHORD to lookup peers that have the chunk and create sockets
-        getTaskManager().execute(new HandleInitiatorDelete(0, version, file_id, peer_id));
-        return 0;
-    }
 
+    //TODO: use CHORD to lookup peers that have the chunk and create sockets
+    getTaskManager().execute(new HandleInitiatorDelete(file_id));
+    return 0;
+  }
 
   @Override
   public int reclaim(int max_space) throws IOException {

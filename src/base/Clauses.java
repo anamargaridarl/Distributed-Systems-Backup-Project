@@ -30,6 +30,7 @@ public class Clauses {
   public static final String SUCCGETCHUNK = "SUCCGETCHUNK";
   public static final String ASKDELETE = "ASKDELETE";
   public static final String NUMREPLY = "NUMREPLY";
+  public static final String DELETEREPLY = "DELETEREPLY";
   public static final String FORWARDGET = "FORWARDGET";
   public static final String GETTOIDEAL = "GETTOIDEAL";
   public static final String REPLYINFOINITIATOR = "REPLYINFOINITIATOR";
@@ -40,9 +41,7 @@ public class Clauses {
   public static final Integer m = 3; //TODO: change to m:8
   public static int NOT_INITIATOR = -1; // sender id will be -1 if a message is relayed from a predecessor
 
-  /**
-   * FOR TEST PURPOSES ONLY
-   */
+  /**FOR TEST PURPOSES ONLY*/
   public static final Hashtable<Integer, InetSocketAddress> chord = new Hashtable<>();
 
   public static void addElements() {
