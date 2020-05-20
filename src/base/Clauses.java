@@ -27,6 +27,7 @@ public class Clauses {
   public static final String GETCHUNK = "GETCHUNK";
   public static final String CHUNK = "CHUNK";
   public static final String REMOVED = "REMOVED";
+  public static final String SUCCGETCHUNK = "SUCCGETCHUNK";
   public static final String ASKDELETE = "ASKDELETE";
   public static final String NUMREPLY = "NUMREPLY";
   public static final String DELETEREPLY = "DELETEREPLY";
@@ -47,17 +48,23 @@ public class Clauses {
     InetSocketAddress obj0 = new InetSocketAddress("localhost", 5000);
     InetSocketAddress obj1 = new InetSocketAddress("localhost", 5001);
     InetSocketAddress obj2 = new InetSocketAddress("localhost", 5002);
+    InetSocketAddress obj3 = new InetSocketAddress("localhost", 5003);
+
 
     chord.put(0, obj0);
-    chord.put(3, obj1);
-    chord.put(6, obj2);
+    chord.put(2, obj1);
+    chord.put(4, obj2);
+    chord.put(6, obj3);
   }
 
   //checks what peer id is supposed to be assigned (TESTING)
   public static Integer checkAllocated(Integer hashKey) {
     if (hashKey >= 6) {
+      return 4;
+    } else if (hashKey >= 4) {
       return 3;
-    } else if (hashKey >= 3) {
+    }
+    if (hashKey >= 2) {
       return 2;
     } else
       return 1;
@@ -67,11 +74,13 @@ public class Clauses {
   public static Integer allocatePeer(Integer hashKey) {
     //TODO: use chord sucessor logic to find key sucessor
     if (hashKey >= 6) {
-      return Peer.getID() != 3 ? 6 : 0;
-    } else if (hashKey >= 3) {
-      return Peer.getID() != 2 ? 3 : 6;
-    } else
-      return Peer.getID() != 1 ? 0 : 3;
+      return Peer.getID() != 4 ? 6 : 0;
+    } else if (hashKey >= 4) {
+      return Peer.getID() != 3 ? 4 : 6;
+    } else if (hashKey >= 2) {
+      return Peer.getID() != 2 ? 2 : 4;
+    }
+    return Peer.getID() != 1 ? 0 : 2;
   }
 
   /***/

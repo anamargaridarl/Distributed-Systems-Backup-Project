@@ -33,6 +33,7 @@ public class HandleInitiatorChunks implements Runnable {
     @Override
     public void run() {
         if (i == 0 || i <= Peer.getStorageManager().getRestoreChunkNum(file_id)) {
+
             if (i == Peer.getStorageManager().getRestoreChunkNum(file_id)  && i != 0) {
                 try {
                     Peer.getStorageManager().restoreFile(filename, file_id, Peer.getStorageManager().getRestoreChunkNum(file_id));
@@ -41,16 +42,18 @@ public class HandleInitiatorChunks implements Runnable {
                     ioException.printStackTrace();
                 }
             }
+
             //TODO: use CHORD to get peer holding the chunk and create socket
             try {
                 UUID hash = hashChunk(file_id,i);
                 Integer hashKey = getHashKey(hash);
                 Integer allocatedPeer = checkAllocated(hashKey); //TODO: dont use this version of the function
-                InetSocketAddress idealPeer = chord.get((allocatedPeer-1)*3); //TODO: fix value when putting together
+                InetSocketAddress idealPeer = chord.get((allocatedPeer-1)*2); //TODO: fix value when putting together
                 client_socket = createSocket(idealPeer);
             } catch (NoSuchAlgorithmException | IOException e) {
                 e.printStackTrace();
             }
+
             ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i, client_socket);
             Peer.getTaskManager().execute(manage_getchunk);
             i = i + 1;

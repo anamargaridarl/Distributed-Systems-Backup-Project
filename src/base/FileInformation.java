@@ -83,4 +83,18 @@ public class FileInformation implements Serializable {
         String file_id_string = pathname + last_modified;
         return getSHA256(file_id_string);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof FileInformation) {
+            FileInformation chk = (FileInformation) obj;
+            return this.fileId.equals(chk.getFileId());
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return fileId.hashCode();
+    }
 }

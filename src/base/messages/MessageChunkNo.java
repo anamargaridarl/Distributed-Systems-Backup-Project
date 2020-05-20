@@ -8,12 +8,18 @@ import java.net.InetSocketAddress;
 public class MessageChunkNo extends Message {
 
     protected int number;
-    protected final InetSocketAddress origin;
+    protected InetSocketAddress origin;
 
     public MessageChunkNo(String v, String type, int sid, String fid, int number) {
         super(v, type, sid, fid);
         this.number = number;
         origin = new InetSocketAddress(Peer.getServerPort());
+    }
+
+    public MessageChunkNo(String v, String type, int sid, String fid, int number, InetSocketAddress peerAddr) {
+        super(v, type, sid, fid);
+        this.number = number;
+        origin = peerAddr;
     }
 
     public MessageChunkNo(String[] message) {
@@ -29,6 +35,8 @@ public class MessageChunkNo extends Message {
     public InetSocketAddress getOrigin() {
         return origin;
     }
+
+    public void setOrigin(InetSocketAddress origin) {this.origin = origin;}
 
     public String createMessageFinal() {
         String super_msg = super.createMessage() + " " + this.number + Clauses.CRLF + Clauses.CRLF;

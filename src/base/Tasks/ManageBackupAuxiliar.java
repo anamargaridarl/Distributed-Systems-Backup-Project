@@ -2,6 +2,7 @@ package base.Tasks;
 
 import base.ChunkInfo;
 import base.Peer;
+import base.TaskLogger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -41,7 +42,7 @@ public class ManageBackupAuxiliar implements Runnable {
         }
         try {
           //TODO: substitute with chord get Next successor
-          InetSocketAddress succ = chord.get(((Peer.getID() + nSuccsTried + i - 1) % 3 * 3));
+          InetSocketAddress succ = chord.get(((Peer.getID() + nSuccsTried + i - 1) % 4 * 2));
           Socket sock = createSocket(succ);
           Peer.getTaskManager().execute(new ManagePutChunk(VANILLA_VERSION, NOT_INITIATOR, chunkInfo.getFileId(), chunkInfo.getNumber(), chunkInfo.getRepDeg(), chunkInfo.getNumber_chunks(), chunk, sock));
           nSuccsTried++;
@@ -52,6 +53,8 @@ public class ManageBackupAuxiliar implements Runnable {
       Peer.getTaskManager().schedule(this, TIMEOUT, TimeUnit.MILLISECONDS);
     } else if(initiatorSocket != null) {
       Peer.getTaskManager().execute(new ManageStored(Peer.getVersion(),currRep,chunkInfo.getFileId(),chunkInfo.getNumber(),initiatorSocket));
+    } else if(nSuccsTried> 0 && succNeeded == 0){
+      TaskLogger.putChunkOk();
     }
   }
 }

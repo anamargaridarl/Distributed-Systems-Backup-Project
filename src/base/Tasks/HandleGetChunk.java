@@ -28,7 +28,6 @@ public class HandleGetChunk implements Runnable {
     @Override
     public void run() {
 
-
         byte[] body;
         int num_chunks = 0;
 

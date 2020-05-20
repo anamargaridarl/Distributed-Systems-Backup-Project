@@ -31,7 +31,7 @@ public class HandleInitiatorDelete implements Runnable{
                 if(allocatedPeer == Peer.getID()) {
                     Peer.getTaskManager().execute(new HandleDeleteFile(file_id,i));
                 } else {
-                    InetSocketAddress idealPeer = chord.get((allocatedPeer -1) *3); //TODO: replace with CHORD lookup for peer key
+                    InetSocketAddress idealPeer = chord.get((allocatedPeer -1) *2); //TODO: replace with CHORD lookup for peer key
                     Socket client_socket = createSocket(idealPeer);
                     Peer.getTaskManager().execute(new ManageDeleteFile(VANILLA_VERSION, Peer.getID(), file_id, i , client_socket));
                 }
