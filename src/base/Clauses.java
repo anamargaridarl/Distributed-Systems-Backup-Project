@@ -28,8 +28,11 @@ public class Clauses {
   public static final String CHUNK = "CHUNK";
   public static final String REMOVED = "REMOVED";
   public static final String ASKDELETE = "ASKDELETE";
-  public static final String DELETEREPLY = "DELETEREPLY";
-  public static final int MAX_DELAY_STORED = 400; // in milliseconds
+  public static final String NUMREPLY = "NUMREPLY";
+  public static final String FORWARDGET = "FORWARDGET";
+  public static final String GETTOIDEAL = "GETTOIDEAL";
+  public static final String REPLYINFOINITIATOR = "REPLYINFOINITIATOR";
+  public static final int MAX_DELAY_STORED = 1500; // in milliseconds
   public static final int MAX_RETRIES = 5;
   public static final int SAVE_PERIOD = 30000; // in milliseconds
   public static final int TIMEOUT = 1000;
@@ -47,6 +50,17 @@ public class Clauses {
     chord.put(40, obj1);
     chord.put(80, obj2);
   }
+
+  //checks what peer id is supposed to be assigned (TESTING)
+  public static Integer checkAllocated(Integer hashKey) {
+    if (hashKey >= 80) {
+      return 3;
+    } else if (hashKey >= 40) {
+      return 2;
+    } else
+      return 1;
+  }
+
   /***/
 
   public static String makeChunkRef(String file_id, int number) {

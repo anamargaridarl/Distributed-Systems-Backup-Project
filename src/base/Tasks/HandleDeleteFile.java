@@ -1,13 +1,9 @@
 package base.Tasks;
 
-import base.ChunkInfo;
 import base.Peer;
-import base.messages.BackupMessage;
-import base.messages.Message;
 import base.messages.MessageChunkNo;
 
 import java.net.Socket;
-import java.util.logging.SocketHandler;
 
 public class HandleDeleteFile implements Runnable {
 
@@ -22,7 +18,7 @@ public class HandleDeleteFile implements Runnable {
     @Override
     public void run() {
         if(msg_delete.getNumber() == 0) {
-            Peer.getTaskManager().execute(new ManageDeleteReply(msg_delete.getVersion(), Peer.getStorageManager().getNumChunk(msg_delete.getFileId(), msg_delete.getNumber()), clientsocket));
+            Peer.getTaskManager().execute(new ManageNumDeleteReply(msg_delete.getVersion(), 1, Peer.getStorageManager().getNumChunk(msg_delete.getFileId(), msg_delete.getNumber()), msg_delete.getFileId(), clientsocket));
         }
         Peer.getStorageManager().deleteChunks(msg_delete.getFileId(), msg_delete.getNumber());
     }
