@@ -1,5 +1,6 @@
 package base;
 
+import java.io.IOException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ public interface PeerInterface extends Remote {
 
     int delete(String pathname) throws RemoteException;
 
-    int reclaim(int max_space) throws RemoteException;
+    int reclaim(int max_space) throws IOException;
 
     List<String> state() throws RemoteException;
 

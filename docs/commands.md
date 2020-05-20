@@ -27,3 +27,11 @@
 ### Snooper
 
 * java -jar McastSnooper.jar  239.255.255.255:5501 239.255.255.254:5502 239.255.255.253:5503
+
+
+###Project2 
+
+* java base.TestApp peer1 BACKUP $PWD/test.txt 2
+
+* java base.PeerInitial 1.0 1 peer1 5000
+* java base.PeerInitial 1.0 2 peer2 5001

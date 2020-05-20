@@ -2,31 +2,24 @@ package base.Tasks;
 
 import static base.Clauses.STORED;
 
-import base.TaskLogger;
-import base.channels.ChannelManager;
+import base.Peer;
+import base.channel.MessageSender;
 import base.messages.MessageChunkNo;
 
-import java.io.UnsupportedEncodingException;
-import java.net.UnknownHostException;
+import java.net.Socket;
 
 public class ManageStored implements Runnable {
 
-    MessageChunkNo st_message;
+  private final MessageChunkNo st_message;
+  private final Socket client_socket;
 
-    public ManageStored(String v, int sid, String fid, int chunkno) {
-        st_message = new MessageChunkNo(v, STORED, sid, fid, chunkno);
-    }
+  public ManageStored(String v, int sid, String fid, int chunkno, Socket socket) {
+    st_message = new MessageChunkNo(v, STORED, sid, fid, chunkno);
+    client_socket = socket;
+  }
 
-    @Override
-    public void run() {
-        try {
-            processMessage();
-        } catch (UnknownHostException e) {
-            TaskLogger.sendMessageFail();
-        }
-    }
-
-    public void processMessage() throws UnknownHostException {
-        ChannelManager.getCntrChannel().sendMessage(st_message.createMessageFinal().getBytes());
-    }
+  @Override
+  public void run() {
+    Peer.getTaskManager().execute(new MessageSender(client_socket, st_message));
+  }
 }

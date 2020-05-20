@@ -9,6 +9,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
+import static base.Clauses.bytesToHex;
+
 public class FileInformation implements Serializable {
 
     private String fileId;
@@ -71,16 +73,6 @@ public class FileInformation implements Serializable {
         return parts;
     }
 
-    private static String bytesToHex(byte[] hash) {
-        StringBuffer hexString = new StringBuffer();
-        for (int i = 0; i < hash.length; i++) {
-            String hex = Integer.toHexString(0xff & hash[i]);
-            if (hex.length() == 1) hexString.append('0');
-            hexString.append(hex);
-        }
-        return hexString.toString();
-    }
-
     public static String getSHA256(String pathname) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         byte[] digest = md.digest(pathname.getBytes(StandardCharsets.UTF_8));
@@ -90,5 +82,19 @@ public class FileInformation implements Serializable {
     public static String createFileid(String pathname, long last_modified) throws NoSuchAlgorithmException {
         String file_id_string = pathname + last_modified;
         return getSHA256(file_id_string);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof FileInformation) {
+            FileInformation chk = (FileInformation) obj;
+            return this.fileId.equals(chk.getFileId());
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return fileId.hashCode();
     }
 }

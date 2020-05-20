@@ -3,18 +3,17 @@ package base;
 
 import base.Storage.StorageManager;
 import base.Tasks.*;
-import base.channels.BackupChannel;
-import base.channels.ChannelManager;
-import base.channels.ControlChannel;
-import base.channels.RestoreChannel;
-import base.messages.Message;
+import base.channel.MessageListener;
 
 import java.io.*;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -23,23 +22,26 @@ import static java.lang.Thread.sleep;
 
 public class Peer extends UnicastRemoteObject implements PeerInterface {
 
+    public static int deletechunks = 0;
+    public static int restorechunks = 0;
     //add methods to access storage and save/load data
     private static String version;
     private static int peer_id;
+    private static int server_port;
     private static StorageManager storage_manager;
-    private static ChannelManager channel_manager;
     private static ScheduledThreadPoolExecutor task_manager;
 
-    Peer(String protocol_vs, int s_id, String mc_addr, String mdb_addr, String mdr_addr, int mc_port, int mdb_port, int mdr_port) throws IOException {
+    Peer(String protocol_vs, int s_id, int port) throws IOException {
         version = protocol_vs;
         peer_id = s_id;
-        channel_manager = new ChannelManager();
+        server_port = port;
         storage_manager = StorageManager.loadStorageManager();
-        channel_manager.setChannels(createControl(mc_addr, mc_port), createBackup(mdb_addr, mdb_port), createRestore(mdr_addr, mdr_port));
         task_manager = new ScheduledThreadPoolExecutor(10);
-        task_manager.scheduleAtFixedRate(new SaveState(), SAVE_PERIOD, SAVE_PERIOD, TimeUnit.MILLISECONDS);
+        //task_manager.scheduleAtFixedRate(new SaveState(), SAVE_PERIOD, SAVE_PERIOD, TimeUnit.MILLISECONDS);
+        task_manager.execute(new MessageListener(server_port));
         addShutdownHook();
         askforDeleteRequests();
+        Clauses.addElements();
     }
 
     private void askforDeleteRequests() {
@@ -55,6 +57,10 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         return peer_id;
     }
 
+    public static int getServerPort() {
+        return server_port;
+    }
+
     public static String getVersion() {
         return version;
     }
@@ -67,23 +73,12 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         return storage_manager;
     }
 
-    public BackupChannel createBackup(String mdb_addr, int mdb_port) throws IOException {
-        BackupChannel bck_channel = new BackupChannel(mdb_addr, mdb_port);
-        new Thread(bck_channel).start();
-        return bck_channel;
-    }
-
-    public ControlChannel createControl(String mc_addr, int mc_port) throws IOException {
-        ControlChannel cnt_channel = new ControlChannel(mc_addr, mc_port);
-        new Thread(cnt_channel).start();
-        return cnt_channel;
-    }
-
-    public RestoreChannel createRestore(String mdr_addr, int mdr_port) throws IOException {
-        RestoreChannel rst_channel = new RestoreChannel(mdr_addr, mdr_port);
-        new Thread(rst_channel).start();
-        return rst_channel;
-
+    public static Socket getChunkSocket(String file_id, int num) throws NoSuchAlgorithmException, IOException {
+        UUID hash = hashChunk(file_id, num);
+        Integer hashKey = getHashKey(hash);
+        Integer peerID = allocatePeer(hashKey);
+        InetSocketAddress peerHost = chord.get(peerID);
+        return createSocket(peerHost);
     }
 
     @Override
@@ -91,7 +86,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
 
         File file = new File(pathname);
         FileInformation file_information = null;
-        if(!file.exists()) {
+        if (!file.exists()) {
             PeerLogger.missingFile(pathname);
             return -1;
         }
@@ -102,7 +97,9 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             file_information.setNumberChunks(chunks.length);
             Peer.getStorageManager().addFileInfo(file_information);
             for (int i = 0; i < chunks.length; i++) {
-                ManagePutChunk manage_putchunk = new ManagePutChunk(version, peer_id, file_information.getFileId(), i, rep_deg, chunks[i]);
+                //TODO: use CHORD to lookup peers addresses and create sockets
+                Socket taskSocket = getChunkSocket(file_information.getFileId(), i);
+                ManagePutChunk manage_putchunk = new ManagePutChunk(version, peer_id, file_information.getFileId(), i, rep_deg, chunks.length, chunks[i], taskSocket);
                 getTaskManager().execute(manage_putchunk);
             }
         } catch (Exception e) {
@@ -111,6 +108,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         }
         return 0;
     }
+
 
     @Override
     public int restore(String pathname) {
@@ -131,19 +129,15 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             return -1;
         }
 
-        //find the name of the file
         String[] parts = pathname.split("/");
         String filename = parts[parts.length - 1];
 
-        Integer id = getID();
-        getStorageManager().addRestoreRequest(file_id, id);
-        int i = 0;
-        ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i);
-        getTaskManager().execute(manage_getchunk);
-        Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), MAX_DELAY_STORED, TimeUnit.MILLISECONDS);
+        //TODO: use CHORD to lookup peers that hold the chunk and create socket
+        Peer.getTaskManager().schedule(new HandleInitiatorChunks(0, version, file_id, peer_id, filename), MAX_DELAY_STORED, TimeUnit.MILLISECONDS);
 
         return 0;
     }
+
 
     @Override
     public int delete(String pathname) throws RemoteException {
@@ -156,34 +150,32 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             PeerLogger.createFileIDFail();
             return -1;
         }
-        for (int i = 0; i < 5; i++) {
-            ManageDeleteFile manage_delete = new ManageDeleteFile(version, peer_id, file_id);
-            getTaskManager().schedule(manage_delete, (i + 1) * TIMEOUT, TimeUnit.MILLISECONDS);
-        }
-        getStorageManager().deleteChunks(file_id);
-        return 0;
-    }
 
-    @Override
-    public int reclaim(int max_space) throws RemoteException {
-        if (max_space < Peer.getStorageManager().getOccupiedSpace() * KB) {
-            while (Peer.getStorageManager().getOccupiedSpace() * KB > max_space) {
-                ChunkInfo removed = Peer.getStorageManager().removeExpendableChunk();
-                PeerLogger.removedChunk(removed.getFileId(), removed.getNumber());
-                Peer.getTaskManager().execute(new ManageRemoveChunk(Peer.version, REMOVED, Peer.getID(), removed.getFileId(), removed.getNumber()));
-            }
-            if (max_space == 0) {
-                Peer.getStorageManager().emptyChunksInfo();
-            }
+
+    //TODO: use CHORD to lookup peers that have the chunk and create sockets
+    getTaskManager().execute(new HandleInitiatorDelete(file_id));
+    return 0;
+  }
+
+  @Override
+  public int reclaim(int max_space) throws IOException {
+    if (max_space < Peer.getStorageManager().getOccupiedSpace() * KB) {
+        while (Peer.getStorageManager().getOccupiedSpace() * KB > max_space) {
+            ChunkInfo removed = Peer.getStorageManager().removeExpendableChunk();
+            PeerLogger.removedChunk(removed.getFileId(), removed.getNumber());
+            Peer.getTaskManager().execute(new ManageRemoveChunk(removed));
         }
+        if (max_space == 0) {
+            Peer.getStorageManager().emptyChunksInfo();
+        }
+    }
 
         Peer.getStorageManager().setTotalSpace(max_space);
         PeerLogger.reclaimComplete(Peer.getStorageManager().getTotalSpace(), Peer.getStorageManager().getOccupiedSpace());
         return 0;
     }
 
-    @Override
-    public List<String> state() throws RemoteException {
+      public List<String> state() throws RemoteException {
         List<String> state_report = new ArrayList<>();
         int i = 1;
         state_report.add("Peer id: " + Peer.getID() + " status report:");

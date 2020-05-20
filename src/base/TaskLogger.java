@@ -10,7 +10,7 @@ public class TaskLogger extends Logger {
         warning("Received own " + type + " message, ignoring.");
     }
 
-    public static void invalidSenderID(String id) {
+    public static void invalidSenderID(int id) {
         error("Sender ID on received msg is not valid. Received: " + id);
     }
 

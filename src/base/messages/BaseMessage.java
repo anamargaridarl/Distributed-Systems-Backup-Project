@@ -2,11 +2,13 @@ package base.messages;
 
 import base.Clauses;
 
+import java.io.Serializable;
+
 import static base.Clauses.CRLF;
 
-public class BaseMessage {
+public class BaseMessage implements Serializable {
 
-    protected String version;
+    protected String version; //TODO: remove version
     protected int SenderId;
     protected String type;
 
@@ -44,6 +46,14 @@ public class BaseMessage {
         String response;
         response = createMessage() + CRLF + CRLF;
         return response;
+    }
+
+    public byte[] toByteArray() {
+        return this.createMessage().getBytes();
+    }
+
+    public byte[] toByteArrayFinal() {
+        return this.createMessageFinal().getBytes();
     }
 
 }

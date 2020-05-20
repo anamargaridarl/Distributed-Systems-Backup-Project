@@ -10,22 +10,25 @@ import java.util.List;
 
 import static base.Clauses.CR;
 import static base.Clauses.LF;
-
+//TODO: remove version of protocol
 public class BackupMessage extends MessageChunkNo {
 
     protected int replicationDeg;
+    protected int n_chunks;
     protected byte[] chunk;
 
-    public BackupMessage(String v, String type, int sid, String fid, int chunkid, int repd, byte[] bdy) {
+    public BackupMessage(String v, String type, int sid, String fid, int chunkid, int repd, int nchunks, byte[] bdy) {
         super(v, type, sid, fid, chunkid);
         replicationDeg = repd;
         chunk = bdy;
+        n_chunks = nchunks;
     }
 
     //boolean used to distinguish send and reply messages
     public BackupMessage(String[] header, byte[] body) {
         super(header[0], header[1], Integer.parseInt(header[2]), header[3], Integer.parseInt(header[4]));
         replicationDeg = Integer.parseInt(header[5]);
+        n_chunks = Integer.parseInt(header[6]);
         chunk = body;
     }
 
@@ -39,7 +42,7 @@ public class BackupMessage extends MessageChunkNo {
 
     public byte[] createByteMessage() throws IOException {
         byte[] response;
-        String super_msg = super.createMessage() + " " + replicationDeg + " " + Clauses.CRLF + Clauses.CRLF;
+        String super_msg = super.createMessage() + " " + replicationDeg + " " + n_chunks + Clauses.CRLF + Clauses.CRLF;
         response = super_msg.getBytes();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write(response);
@@ -48,4 +51,7 @@ public class BackupMessage extends MessageChunkNo {
         return response;
     }
 
+    public int getNumberChunks() {
+        return this.n_chunks;
+    }
 }

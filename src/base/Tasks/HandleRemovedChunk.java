@@ -1,17 +1,17 @@
 package base.Tasks;
 
+import base.ChunkInfo;
 import base.Peer;
 import base.TaskLogger;
-import base.channels.ChannelManager;
+import base.channel.MessageReceiver;
 import base.messages.MessageChunkNo;
 
 import java.io.IOException;
-import java.util.Random;
-import java.util.TreeSet;
-import java.util.concurrent.ScheduledFuture;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
-import static base.Clauses.MAX_DELAY_STORED;
+import static base.Clauses.*;
 
 /* Class that handles chunk removal task (to be concurrent)
  * check if the peer has the specific chunk and retrieve its desired replication degree
@@ -19,33 +19,50 @@ import static base.Clauses.MAX_DELAY_STORED;
  */
 public class HandleRemovedChunk implements Runnable {
 
-    MessageChunkNo message;
+  MessageChunkNo message;
 
-    public HandleRemovedChunk(String[] msg) {
-        message = new MessageChunkNo(msg);
-    }
+  public HandleRemovedChunk(MessageChunkNo msg) {
+    message = msg;
+  }
 
-    @Override
-    public void run() {
-        String rm_file_id = message.getFileId();
-        int rm_chunk_n = message.getNumber();
-        Peer.getStorageManager().decrementRepDegree(rm_file_id, rm_chunk_n);
-        TaskLogger.removedReceived(Peer.getStorageManager().getChunkRepDegree(rm_file_id, rm_chunk_n));
-        if (Peer.getStorageManager().isRepDegreeLow(rm_file_id, rm_chunk_n)) {
-            TaskLogger.lowRepDeg();
-            int desired_rep_deg = Peer.getStorageManager().getChunkInfo(rm_file_id, rm_chunk_n).getRepDeg();
-            byte[] chunk_data = new byte[0];
-            try {
-                chunk_data = Peer.getStorageManager().getChunkData(rm_file_id, rm_chunk_n);
-            } catch (IOException e) {
-                TaskLogger.getChunkRetrieveFail();
-            }
-            ScheduledFuture<?> pending = Peer.getTaskManager().schedule(
-                    new ManagePutChunk(Peer.getVersion(), Peer.getID(), rm_file_id, rm_chunk_n, desired_rep_deg, chunk_data),
-                    new Random().nextInt(MAX_DELAY_STORED),
-                    TimeUnit.MILLISECONDS
-            );
-            ChannelManager.getBckChannel().registerPutChunkMessage(rm_file_id, rm_chunk_n, pending);
-        }
+  @Override
+  public void run() {
+    String rm_file_id = message.getFileId();
+    int rm_chunk_n = message.getNumber();
+    int desiredRepDeg = Peer.getStorageManager().getChunkRepDegree(rm_file_id, rm_chunk_n);
+    //remove reference of that senders of the table
+    Peer.getStorageManager().removeSuccessorStoredOccurrence(rm_file_id, rm_chunk_n, message.getOrigin());
+    TaskLogger.removedReceived(Peer.getStorageManager().getChunkRepDegree(rm_file_id, rm_chunk_n));
+    TaskLogger.lowRepDeg();
+    ChunkInfo backupChunk;
+    if ((backupChunk = Peer.getStorageManager().getChunkInfo(message.getFileId(), message.getNumber())) != null) {
+      byte[] chunk_data;
+      try {
+        chunk_data = Peer.getStorageManager().getChunkData(rm_file_id, rm_chunk_n);
+        Peer.getTaskManager().execute(new ManageBackupAuxiliar(backupChunk, chunk_data));
+      } catch (IOException e) {
+        TaskLogger.getChunkRetrieveFail();
+      }
+    } else {
+      try {
+        InetSocketAddress succAddr = Peer.getStorageManager().getSuccGetChunk(message);
+        Socket succSocket = createSocket(succAddr);
+        Peer.getTaskManager().execute(new ManageSuccGetChunk(message.getFileId(), message.getNumber(), succSocket));
+        Peer.getTaskManager().schedule(() -> {
+          if (Peer.getStorageManager().checkReceiveChunk(message.getFileId(), message.getNumber())) {
+            byte[] chunk = Peer.getStorageManager().getRestoredChunk(message.getFileId(), message.getNumber());
+            int chunks_num = Peer.getStorageManager().getRestoreChunkNum(message.getFileId());
+            ChunkInfo restoredChunk = new ChunkInfo(message.getFileId(), desiredRepDeg, NOT_INITIATOR, message.getNumber(), chunks_num);
+            Peer.getTaskManager().execute(new ManageBackupAuxiliar(restoredChunk, chunk));
+            Peer.getStorageManager().removeRestoredChunkData(message.getFileId());
+          } else {
+            TaskLogger.putChunkFail(message.getFileId(), message.getNumber());
+          }
+        }, 2 * TIMEOUT, TimeUnit.MILLISECONDS);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+
     }
+  }
 }

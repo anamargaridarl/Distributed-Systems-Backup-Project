@@ -1,35 +1,45 @@
 package base.messages;
 
 import base.Clauses;
+import base.Peer;
 
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static base.Clauses.CR;
-import static base.Clauses.LF;
+import java.net.InetSocketAddress;
 
 public class MessageChunkNo extends Message {
 
     protected int number;
+    protected InetSocketAddress origin;
 
     public MessageChunkNo(String v, String type, int sid, String fid, int number) {
         super(v, type, sid, fid);
         this.number = number;
+        origin = new InetSocketAddress(Peer.getServerPort());
+    }
+
+    public MessageChunkNo(String v, String type, int sid, String fid, int number, InetSocketAddress peerAddr) {
+        super(v, type, sid, fid);
+        this.number = number;
+        origin = peerAddr;
     }
 
     public MessageChunkNo(String[] message) {
         super(message[0], message[1], Integer.parseInt(message[2]), message[3]);
         number = Integer.parseInt(message[4]);
+        origin = null;
     }
 
     public int getNumber() {
         return number;
     }
 
+    public InetSocketAddress getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(InetSocketAddress origin) {this.origin = origin;}
+
     public String createMessageFinal() {
-        String super_msg = super.createMessage() + " " + this.number + " " + Clauses.CRLF + Clauses.CRLF;
+        String super_msg = super.createMessage() + " " + this.number + Clauses.CRLF + Clauses.CRLF;
         return super_msg;
     }
 
@@ -40,26 +50,13 @@ public class MessageChunkNo extends Message {
         return response;
     }
 
-    public static List<byte[]> separateHeaderAndBody(byte[] message) {
-        int i = 0;
-        for (; i < message.length - 4; i++) { //check the message where the <CRLF><CRLF> are located
-            if (message[i] == CR && message[i + 1] == LF && message[i + 2] == CR && message[i + 3] == LF)
-                break;
-        }
-        if (i == message.length - 4) {
-            return null;
-        }
-        List<byte[]> newList = new ArrayList<>();
-        byte[] header = Arrays.copyOfRange(message, 0, i);
-        byte[] body = Arrays.copyOfRange(message, i + 4, message.length);
-        newList.add(header);
-        newList.add(body);
-        return newList;
+    @Override
+    public byte[] toByteArray() {
+        return this.createMessage().getBytes();
     }
 
-    public static String[] parseHeader(byte[] header) {
-        return new String(header, 0, header.length).split(" ");
+    @Override
+    public byte[] toByteArrayFinal() {
+        return this.createMessageFinal().getBytes();
     }
-
-
 }
