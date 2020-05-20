@@ -175,7 +175,6 @@ public class StorageManager implements java.io.Serializable {
       Socket socket = createSocket(idealPeer);
       Peer.getTaskManager().execute(new ManageDeleteFile(VANILLA_VERSION, Peer.getID(), file_id, number, socket));
       stored_senders.remove(chunk_ref);
-      removeFileInfo(file_id);
     }
 
   }

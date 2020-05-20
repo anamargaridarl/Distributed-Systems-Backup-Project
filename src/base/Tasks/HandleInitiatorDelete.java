@@ -22,7 +22,8 @@ public class HandleInitiatorDelete implements Runnable{
 
     @Override
     public void run() {
-        if (i < Peer.getStorageManager().getDeleteChunkNum(file_id) || i == 0) {
+        int deleteChunkNum = Peer.getStorageManager().getDeleteChunkNum(file_id);
+        if (i < deleteChunkNum || i == 0) {
             try {
                 UUID hash = hashChunk(file_id,i);
                 int hashKey = getHashKey(hash);
@@ -40,6 +41,8 @@ public class HandleInitiatorDelete implements Runnable{
                 e.printStackTrace();
             }
 
+        } else if (i == deleteChunkNum) {
+            Peer.getStorageManager().removeFileInfo(file_id);
         }
     }
 }
