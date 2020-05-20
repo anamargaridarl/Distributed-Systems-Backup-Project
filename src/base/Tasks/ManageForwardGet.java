@@ -7,20 +7,18 @@ import base.messages.MessageChunkNo;
 
 import java.net.Socket;
 
-import static base.Clauses.GETCHUNK;
+import static base.Clauses.*;
 
-/*
-    Class that manages restore requests as initiator peer
- */
-public class ManageGetChunk implements Runnable {
+public class ManageForwardGet implements Runnable {
 
     private final MessageChunkNo getchunk_message;
     private final Socket client_socket;
 
-    public ManageGetChunk(String version, int sender_id, String file_id, int i, Socket client) {
-        getchunk_message = new MessageChunkNo(version, GETCHUNK, sender_id, file_id, i);
-        client_socket = client;
+    public ManageForwardGet(String version, int sender_id, String file_id, int i, Socket client) {
+        this.getchunk_message = new MessageChunkNo(version, FORWARDGET, sender_id, file_id, i);
+        this.client_socket = client;
     }
+
 
     @Override
     public void run() {
