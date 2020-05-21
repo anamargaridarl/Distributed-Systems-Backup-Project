@@ -4,6 +4,7 @@ import base.Peer;
 import base.TaskLogger;
 import base.messages.MessageChunkNo;
 
+import javax.net.ssl.SSLSocket;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -18,9 +19,9 @@ import static base.Clauses.*;
 public class HandleGetChunk implements Runnable {
 
     private final MessageChunkNo getchunk_message;
-    private Socket client_socket;
+    private SSLSocket client_socket;
 
-    public HandleGetChunk(MessageChunkNo message, Socket client_socket) {
+    public HandleGetChunk(MessageChunkNo message, SSLSocket client_socket) {
         getchunk_message = message;
         this.client_socket = client_socket;
     }
@@ -47,7 +48,7 @@ public class HandleGetChunk implements Runnable {
                         TaskLogger.restoreFileFail();
                         return;
                     }
-                    Socket socket = createSocket(inetSocketAddress);
+                    SSLSocket socket = createSocket(inetSocketAddress);
                     Peer.getTaskManager().execute(new ManageForwardGet(getchunk_message.getVersion(), Peer.getID(), getchunk_message.getFileId(), getchunk_message.getNumber(), socket));
                     Peer.getTaskManager().schedule(this, 500, TimeUnit.MILLISECONDS);
                 } catch (IOException a) {

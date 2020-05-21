@@ -2,6 +2,7 @@ package base.Tasks;
 
 import base.Peer;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -32,7 +33,7 @@ public class HandleInitiatorDelete implements Runnable{
                     Peer.getTaskManager().execute(new HandleDeleteFile(file_id,i));
                 } else {
                     InetSocketAddress idealPeer = chord.get((allocatedPeer -1) *2); //TODO: replace with CHORD lookup for peer key
-                    Socket client_socket = createSocket(idealPeer);
+                    SSLSocket client_socket = createSocket(idealPeer);
                     Peer.getTaskManager().execute(new ManageDeleteFile(VANILLA_VERSION, Peer.getID(), file_id, i , client_socket));
                 }
                 i++;

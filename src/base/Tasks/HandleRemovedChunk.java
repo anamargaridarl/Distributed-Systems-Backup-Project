@@ -6,6 +6,7 @@ import base.TaskLogger;
 import base.channel.MessageReceiver;
 import base.messages.MessageChunkNo;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -46,7 +47,7 @@ public class HandleRemovedChunk implements Runnable {
     } else {
       try {
         InetSocketAddress succAddr = Peer.getStorageManager().getSuccGetChunk(message);
-        Socket succSocket = createSocket(succAddr);
+        SSLSocket succSocket = createSocket(succAddr);
         Peer.getTaskManager().execute(new ManageSuccGetChunk(message.getFileId(), message.getNumber(), succSocket));
         Peer.getTaskManager().schedule(() -> {
           if (Peer.getStorageManager().checkReceiveChunk(message.getFileId(), message.getNumber())) {

@@ -1,5 +1,7 @@
 package base;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -166,7 +168,8 @@ public class Clauses {
   /**
    * FOR TEST PURPOSES ONLY
    */
-  public static Socket createSocket(InetSocketAddress host) throws IOException {
-    return new Socket(host.getAddress(), host.getPort());
-  }
+  public static SSLSocket createSocket(InetSocketAddress host) throws IOException {
+    return (SSLSocket) SSLSocketFactory.getDefault().createSocket(String.valueOf(host),host.getPort());
+    };
+
 }

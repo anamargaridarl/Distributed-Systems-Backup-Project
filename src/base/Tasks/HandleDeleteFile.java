@@ -3,6 +3,7 @@ package base.Tasks;
 import base.Peer;
 import base.messages.MessageChunkNo;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -10,11 +11,11 @@ import static base.Clauses.*;
 
 public class HandleDeleteFile implements Runnable {
 
-  private final Socket clientSocket;
+  private final SSLSocket clientSocket;
   private final MessageChunkNo msg_delete;
 
 
-  public HandleDeleteFile(MessageChunkNo msg, Socket socket) {
+  public HandleDeleteFile(MessageChunkNo msg, SSLSocket socket) {
     msg_delete = msg;
     this.clientSocket = socket;
   }

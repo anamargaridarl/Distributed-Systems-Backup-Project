@@ -3,6 +3,7 @@ package base.Tasks;
 import base.Peer;
 import base.messages.MessageChunkNo;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -22,7 +23,7 @@ public class HandleDeclined implements Runnable{
     if(declineMsg.getSenderId() != NOT_INITIATOR) {
       InetSocketAddress chunkHolder = declineMsg.getOrigin();
       try {
-        Socket socket = createSocket(chunkHolder);
+        SSLSocket socket = createSocket(chunkHolder);
         Peer.getTaskManager().execute(new ManageSuccGetChunk(declineMsg.getFileId(),declineMsg.getNumber(),socket));
       } catch (Exception e) {
         e.printStackTrace();

@@ -7,6 +7,7 @@ import base.channel.MessageReceiver;
 import base.channel.MessageSender;
 import base.messages.BackupMessage;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
@@ -18,11 +19,11 @@ import static base.Clauses.*;
  */
 public class ManagePutChunk implements Runnable {
 
-    private final Socket client_socket;
+    private final SSLSocket client_socket;
     private final BackupMessage bk_message;
     private int n_try;
 
-    public ManagePutChunk(String v, int sid, String fid, int chunkno, int repd, int n_chunks, byte[] bdy, Socket client) throws IOException {
+    public ManagePutChunk(String v, int sid, String fid, int chunkno, int repd, int n_chunks, byte[] bdy, SSLSocket  client) throws IOException {
         bk_message = new BackupMessage(v, PUTCHUNK, sid, fid, chunkno, repd, n_chunks, bdy);
         n_try = 0;
         client_socket = client;

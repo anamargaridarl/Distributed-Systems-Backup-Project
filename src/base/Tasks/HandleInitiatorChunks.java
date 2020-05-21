@@ -4,6 +4,7 @@ import base.Peer;
 import base.TaskLogger;
 import base.channel.MessageReceiver;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -15,7 +16,7 @@ import static base.Clauses.*;
 
 public class HandleInitiatorChunks implements Runnable {
 
-    private Socket client_socket;
+    private SSLSocket client_socket;
     private int i;
     private String version;
     private String file_id;

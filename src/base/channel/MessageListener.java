@@ -2,24 +2,26 @@ package base.channel;
 
 import base.Peer;
 
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.Socket;
 
 public class MessageListener implements Runnable {
-  ServerSocket server_socket;
+  SSLServerSocket server_socket;
   int serverPort;
 
   public MessageListener(int port) throws IOException {
     serverPort = port;
-    server_socket = new ServerSocket(serverPort);
+    server_socket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(serverPort);
   }
 
   @Override
   public void run() {
     while (true) {
       try {
-        Socket client = server_socket.accept();
+        SSLSocket client = (SSLSocket) server_socket.accept();
         Peer.getTaskManager().execute(new MessageReceiver(client));
       } catch (IOException e) {
         e.printStackTrace();

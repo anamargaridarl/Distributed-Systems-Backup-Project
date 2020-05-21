@@ -1,5 +1,6 @@
 package base.channel;
 
+import javax.net.ssl.SSLSocket;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -12,10 +13,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MessageSender implements Runnable {
     private final static ConcurrentHashMap<Socket,ObjectOutputStream> outStreams = new ConcurrentHashMap<>();
-    private final Socket socket;
+    private final SSLSocket socket;
     private final Object msg;
 
-    public MessageSender(Socket socket, Object msg) {
+    public MessageSender(SSLSocket socket, Object msg) {
         this.socket = socket;
         this.msg = msg;
     }

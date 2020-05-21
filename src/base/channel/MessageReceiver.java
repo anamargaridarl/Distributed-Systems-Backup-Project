@@ -3,6 +3,7 @@ package base.channel;
 import base.Peer;
 import base.Tasks.HandleReceivedManager;
 
+import javax.net.ssl.SSLSocket;
 import java.io.*;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,9 +11,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MessageReceiver implements Runnable {
   private static final ConcurrentHashMap<Socket,ObjectInputStream> inStreams = new ConcurrentHashMap<>();
-  private final Socket client_socket;
+  private final SSLSocket client_socket;
 
-  public MessageReceiver(Socket c_socket) {
+  public MessageReceiver(SSLSocket c_socket) {
     client_socket = c_socket;
   }
 
