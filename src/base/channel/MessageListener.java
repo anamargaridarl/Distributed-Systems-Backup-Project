@@ -15,6 +15,8 @@ public class MessageListener implements Runnable {
   public MessageListener(int port) throws IOException {
     serverPort = port;
     server_socket = (SSLServerSocket) SSLServerSocketFactory.getDefault().createServerSocket(serverPort);
+    server_socket.setNeedClientAuth(true);
+    server_socket.setEnabledCipherSuites(new String[]{"TLS_RSA_WITH_AES_256_GCM_SHA384", "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA"});
   }
 
   @Override

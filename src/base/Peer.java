@@ -6,6 +6,7 @@ import base.Tasks.*;
 import base.channel.MessageListener;
 
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -43,6 +44,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         addShutdownHook();
         askforDeleteRequests();
         Clauses.addElements();
+
     }
 
     private void askforDeleteRequests() {
@@ -79,7 +81,10 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         Integer hashKey = getHashKey(hash);
         Integer peerID = allocatePeer(hashKey);
         InetSocketAddress peerHost = chord.get(peerID);
-        return createSocket(peerHost);
+        SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(peerHost.getAddress(), peerHost.getPort());
+        socket.setEnabledCipherSuites(new String[]{"TLS_RSA_WITH_AES_256_GCM_SHA384", "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA"});
+        socket.startHandshake();
+        return socket;
     }
 
     @Override
