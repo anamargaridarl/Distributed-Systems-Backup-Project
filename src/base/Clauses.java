@@ -165,7 +165,9 @@ public class Clauses {
 
     public static SSLSocket createSocket(InetAddress host, int port) throws IOException {
         SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(host, port);
-        socket.setEnabledCipherSuites(new String[]{"TLS_RSA_WITH_AES_256_GCM_SHA384", "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA"});
+        socket.setEnabledCipherSuites(new String[] {
+                "TLS_DHE_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA"
+        });
         socket.startHandshake();
         return socket;
     }
@@ -175,7 +177,9 @@ public class Clauses {
      */
     public static SSLSocket createSocket(InetSocketAddress host) throws IOException {
         SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(host.getAddress(), host.getPort());
-        socket.setEnabledCipherSuites(new String[]{"TLS_RSA_WITH_AES_256_GCM_SHA384", "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA"});
+        socket.setEnabledCipherSuites(new String[] {
+               "TLS_DHE_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA"
+        });
         socket.startHandshake();
         return socket;
     }

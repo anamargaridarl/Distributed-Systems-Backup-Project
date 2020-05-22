@@ -10,3 +10,9 @@ cp --parents $(find -name \*.class) ../test/peer2/
 cp --parents $(find -name \*.class) ../test/peer3/
 cp --parents $(find -name \*.class) ../test/peer4/
 cp --parents $(find -name \TestApp.class && find -name \PeerInterface.class) ../test/client/
+
+cd ..
+cp -R keys test/peer1/
+cp -R keys test/peer2/
+cp -R keys test/peer3/
+cp -R keys test/peer4/
