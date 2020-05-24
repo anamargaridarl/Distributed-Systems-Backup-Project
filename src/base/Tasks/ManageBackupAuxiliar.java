@@ -4,6 +4,7 @@ import base.ChunkInfo;
 import base.Peer;
 import base.TaskLogger;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -13,12 +14,12 @@ import static base.Clauses.*;
 
 public class ManageBackupAuxiliar implements Runnable {
 
-  private Socket initiatorSocket;
+  private SSLSocket initiatorSocket;
   private final ChunkInfo chunkInfo;
   private final byte[] chunk;
   private int nSuccsTried;
 
-  public ManageBackupAuxiliar(ChunkInfo chunk_info, byte[] chunk, Socket initiatorSocket) {
+  public ManageBackupAuxiliar(ChunkInfo chunk_info, byte[] chunk, SSLSocket initiatorSocket) {
     this.chunk = chunk;
     this.chunkInfo = chunk_info;
     this.initiatorSocket = initiatorSocket;
@@ -43,7 +44,7 @@ public class ManageBackupAuxiliar implements Runnable {
         try {
           //TODO: substitute with chord get Next successor
           InetSocketAddress succ = chord.get(((Peer.getID() + nSuccsTried + i - 1) % 4 * 2));
-          Socket sock = createSocket(succ);
+          SSLSocket sock = createSocket(succ);
           Peer.getTaskManager().execute(new ManagePutChunk(VANILLA_VERSION, NOT_INITIATOR, chunkInfo.getFileId(), chunkInfo.getNumber(), chunkInfo.getRepDeg(), chunkInfo.getNumber_chunks(), chunk, sock));
           nSuccsTried++;
         } catch (IOException e) {

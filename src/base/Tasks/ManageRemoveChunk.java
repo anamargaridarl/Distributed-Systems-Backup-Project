@@ -5,6 +5,7 @@ import base.Peer;
 import base.channel.MessageSender;
 import base.messages.MessageChunkNo;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -33,7 +34,7 @@ public class ManageRemoveChunk implements Runnable {
       } else {
         MessageChunkNo removedMsg = new MessageChunkNo(VANILLA_VERSION, REMOVED, Peer.getID(), removedChunk.getFileId(), removedChunk.getNumber());
         InetSocketAddress idealPeer = chord.get((allocated-1)*2); //TODO: replace with CHORD methods to obtain peer address
-        Socket peerSocket = createSocket(idealPeer);
+        SSLSocket peerSocket = createSocket(idealPeer);
         Peer.getTaskManager().execute(new MessageSender(peerSocket, removedMsg));
       }
     } catch (NoSuchAlgorithmException | IOException e) {

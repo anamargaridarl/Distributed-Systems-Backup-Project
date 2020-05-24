@@ -4,6 +4,7 @@ import base.Peer;
 import base.TaskLogger;
 import base.messages.*;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -13,11 +14,11 @@ import static base.Clauses.*;
     Class that manages incoming messages sent through multicast channels
 */
 public class HandleReceivedManager implements Runnable {
-    private final Socket client_socket;
+    private final SSLSocket client_socket;
     private final Object msg;
     private final String type;
 
-    public HandleReceivedManager(Object msg, Socket c_socket) {
+    public HandleReceivedManager(Object msg, SSLSocket c_socket) {
         this.msg = msg;
         this.type = ((BaseMessage) msg).getType();
         this.client_socket = c_socket;

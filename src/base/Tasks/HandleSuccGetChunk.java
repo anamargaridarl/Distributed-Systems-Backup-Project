@@ -3,6 +3,7 @@ package base.Tasks;
 import base.Peer;
 import base.messages.MessageChunkNo;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.lang.invoke.VarHandle;
 import java.net.InetSocketAddress;
@@ -14,9 +15,9 @@ import static base.Clauses.createSocket;
 
 public class HandleSuccGetChunk implements Runnable {
   private final MessageChunkNo succGetChunk;
-  private final Socket client_socket;
+  private final SSLSocket client_socket;
 
-  public HandleSuccGetChunk(MessageChunkNo succGetChunk, Socket client_socket) {
+  public HandleSuccGetChunk(MessageChunkNo succGetChunk, SSLSocket client_socket) {
     this.succGetChunk = succGetChunk;
     this.client_socket = client_socket;
   }

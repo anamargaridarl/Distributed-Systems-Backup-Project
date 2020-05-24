@@ -5,6 +5,7 @@ import base.Peer;
 import base.TaskLogger;
 import base.messages.BackupMessage;
 
+import javax.net.ssl.SSLSocket;
 import java.net.Socket;
 
 import static base.Clauses.NOT_INITIATOR;
@@ -18,9 +19,9 @@ public class HandlePutChunk implements Runnable {
     private final int sender_id;
     private final ChunkInfo chunk_info;
     private final byte[] chunk;
-    private final Socket client_socket;
+    private final SSLSocket client_socket;
 
-    public HandlePutChunk(BackupMessage message, Socket socket) {
+    public HandlePutChunk(BackupMessage message, SSLSocket socket) {
         this.sender_id = message.getSenderId();
         this.version = message.getVersion();
         this.chunk_info = new ChunkInfo(message.getFileId(), message.getReplicationDeg(), message.getBody().length, message.getNumber(), message.getNumberChunks());

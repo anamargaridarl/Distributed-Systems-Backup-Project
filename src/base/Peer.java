@@ -5,6 +5,8 @@ import base.Storage.StorageManager;
 import base.Tasks.*;
 import base.channel.MessageListener;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -42,6 +44,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         addShutdownHook();
         askforDeleteRequests();
         Clauses.addElements();
+
     }
 
     private void askforDeleteRequests() {
@@ -73,12 +76,17 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
         return storage_manager;
     }
 
-    public static Socket getChunkSocket(String file_id, int num) throws NoSuchAlgorithmException, IOException {
+    public static SSLSocket getChunkSocket(String file_id, int num) throws NoSuchAlgorithmException, IOException {
         UUID hash = hashChunk(file_id, num);
         Integer hashKey = getHashKey(hash);
         Integer peerID = allocatePeer(hashKey);
         InetSocketAddress peerHost = chord.get(peerID);
-        return createSocket(peerHost);
+        SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(peerHost.getAddress(), peerHost.getPort());
+        socket.setEnabledCipherSuites(new String[] {
+                "TLS_DHE_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA"
+        });
+        socket.startHandshake();
+        return socket;
     }
 
     @Override
@@ -98,7 +106,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             Peer.getStorageManager().addFileInfo(file_information);
             for (int i = 0; i < chunks.length; i++) {
                 //TODO: use CHORD to lookup peers addresses and create sockets
-                Socket taskSocket = getChunkSocket(file_information.getFileId(), i);
+                SSLSocket taskSocket = getChunkSocket(file_information.getFileId(), i);
                 ManagePutChunk manage_putchunk = new ManagePutChunk(version, peer_id, file_information.getFileId(), i, rep_deg, chunks.length, chunks[i], taskSocket);
                 getTaskManager().execute(manage_putchunk);
             }

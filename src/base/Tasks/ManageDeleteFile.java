@@ -5,6 +5,7 @@ import base.channel.MessageReceiver;
 import base.channel.MessageSender;
 import base.messages.MessageChunkNo;
 
+import javax.net.ssl.SSLSocket;
 import java.net.Socket;
 
 import static base.Clauses.DELETE;
@@ -13,8 +14,8 @@ import static base.Clauses.ENHANCED_VERSION;
 public class ManageDeleteFile implements Runnable {
 
     private final MessageChunkNo msg_delete;
-    private final Socket client_socket;
-    public ManageDeleteFile(String version, int peer_id, String file_id,int chunk_no, Socket c_socket) {
+    private final SSLSocket client_socket;
+    public ManageDeleteFile(String version, int peer_id, String file_id,int chunk_no, SSLSocket c_socket) {
         msg_delete = new MessageChunkNo(version, DELETE, peer_id, file_id,chunk_no);
         client_socket = c_socket;
     }

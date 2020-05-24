@@ -9,6 +9,7 @@ import base.channel.MessageReceiver;
 import base.*;
 import base.messages.MessageChunkNo;
 
+import javax.net.ssl.SSLSocket;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -204,7 +205,7 @@ public class StorageManager implements java.io.Serializable {
         Set<InetSocketAddress> suc = successors_stored_senders.get(chunk_ref);
         if (suc != null) {
             for (InetSocketAddress peer : suc) {
-                Socket socket = createSocket(peer);
+                SSLSocket socket = createSocket(peer);
                 Peer.getTaskManager().execute(new ManageDeleteFile(VANILLA_VERSION, NOT_INITIATOR, file_id, number, socket));
             }
             successors_stored_senders.remove(chunk_ref);
@@ -214,7 +215,7 @@ public class StorageManager implements java.io.Serializable {
         //fetch the reference stored in stored_senders and send the delete
         InetSocketAddress idealPeer = stored_senders.get(chunk_ref);
         if (idealPeer != null) {
-            Socket socket = createSocket(idealPeer);
+            SSLSocket socket = createSocket(idealPeer);
             Peer.getTaskManager().execute(new ManageDeleteFile(VANILLA_VERSION, Peer.getID(), file_id, number, socket));
             stored_senders.remove(chunk_ref);
         }
