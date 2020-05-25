@@ -5,18 +5,22 @@ import base.FileInformation;
 import base.Peer;
 import base.StorageLogger;
 import base.Tasks.ManageDeleteFile;
-import base.channel.MessageReceiver;
 import base.*;
 import base.messages.MessageChunkNo;
 
 import javax.net.ssl.SSLSocket;
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.nio.ByteBuffer;
+import java.nio.channels.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static base.Clauses.*;
 
@@ -63,7 +67,21 @@ public class StorageManager implements java.io.Serializable {
     //shared functions
     public byte[] getChunkData(String file_id, int number) throws IOException {
         String chunk_filename = Peer.getID() + "_STORAGE/" + file_id + ":" + number;
-        return Files.readAllBytes(Paths.get(chunk_filename));
+        Path path = Paths.get(chunk_filename);
+        AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(path, StandardOpenOption.READ);
+
+        ByteBuffer buffer = ByteBuffer.allocate(Clauses.MAX_SIZE);
+        long position = 0;
+
+        Future<Integer> operation = fileChannel.read(buffer, position);
+        while(!operation.isDone());
+
+        buffer.flip();
+        byte[] data = new byte[buffer.limit()];
+        buffer.get(data);
+        buffer.clear();
+
+        return data;
     }
 
 
@@ -144,7 +162,29 @@ public class StorageManager implements java.io.Serializable {
         }
     }
 
-    public synchronized boolean storeChunk(ChunkInfo chunk_info, byte[] chunk_data) {
+    private static class ChunkWriteHandler implements CompletionHandler<Integer,Object> {
+
+        private final ChunkInfo chunk_info;
+
+        public ChunkWriteHandler(ChunkInfo chunk_info) {
+            this.chunk_info = chunk_info;
+        }
+
+        @Override
+        public void completed(Integer integer, Object o) {
+            Peer.getStorageManager().chunks_info.add(chunk_info);
+            Peer.getStorageManager().incrementRepDegree(chunk_info.getFileId(), chunk_info.getNumber());
+            Peer.getStorageManager().reduceSpaceAvailable(chunk_info.getSize());
+        }
+
+        @Override
+        public void failed(Throwable throwable, Object o) {
+            StorageLogger.storeChunkFail();
+            throwable.printStackTrace();
+        }
+    }
+
+    public synchronized boolean storeChunk(ChunkInfo chunk_info, byte[] chunk_data) throws ExecutionException, InterruptedException {
 
         String chunk_filename = Peer.getID() + "_STORAGE/" + chunk_info.getFileId() + ":" + chunk_info.getNumber();
         try {
@@ -154,17 +194,25 @@ public class StorageManager implements java.io.Serializable {
                 chunk.createNewFile();
             }
 
-            FileOutputStream outputStream = new FileOutputStream(chunk_filename);
-            outputStream.write(chunk_data);
+            AsynchronousFileChannel outChannel = AsynchronousFileChannel.open(chunk.toPath(), StandardOpenOption.WRITE,StandardOpenOption.CREATE);
+
+            ByteBuffer buf = ByteBuffer.allocate(Clauses.MAX_SIZE);
+            buf.clear();
+            buf.put(chunk_data);
+            buf.flip();
+
+            outChannel.write(buf,0,null, new ChunkWriteHandler(chunk_info));
 
         } catch (IOException e) {
             StorageLogger.storeChunkFail();
+            e.printStackTrace();
             return false;
         }
-        this.chunks_info.add(chunk_info);
-        incrementRepDegree(chunk_info.getFileId(), chunk_info.getNumber());
-        reduceSpaceAvailable(chunk_info.getSize());
-        return true;
+
+        Future<Boolean> stored = Peer.getTaskManager().schedule(() -> {
+            return this.chunks_info.contains(chunk_info);
+        },400, TimeUnit.MILLISECONDS);
+        return stored.get();
     }
 
     public synchronized void incrementRepDegree(String file_id, int number) {
@@ -459,7 +507,6 @@ public class StorageManager implements java.io.Serializable {
             TaskLogger.restoreFileFail();
             return;
         }
-
         String chunk_filename = Peer.getID() + "_RESTORE" + "/" + filename;
         File file = new File(chunk_filename);
 
@@ -468,13 +515,21 @@ public class StorageManager implements java.io.Serializable {
             file.createNewFile();
         }
 
-        FileOutputStream file_to_write = new FileOutputStream(file);
+        AsynchronousFileChannel fileChannel =  AsynchronousFileChannel.open(file.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+        long position = 0;
 
         for (int i = 0; i < number_chunks; i++) {
-            file_to_write.write(chunks.get(i));
+            ByteBuffer buffer = ByteBuffer.allocate(chunks.get(i).length);
+            buffer.clear();
+            buffer.put(chunks.get(i));
+            buffer.flip();
+
+            Future<Integer> operation = fileChannel.write(buffer, position);
+            buffer.clear();
+            while(!operation.isDone());
+            position += Clauses.MAX_SIZE;
         }
 
-        file_to_write.close();
         StorageLogger.restoreFileOk(filename);
         removeRestoredChunkData(fileid);
         removeRestoreRequest(fileid, Peer.getID());
@@ -508,16 +563,44 @@ public class StorageManager implements java.io.Serializable {
     //save information when peer is off functions
     public static StorageManager loadStorageManager() {
         String filename = Peer.getID() + "_STATE.ser";
+
         try {
             File file = new File(filename);
             if (!file.exists()) {
                 return new StorageManager();
             }
-            FileInputStream file_is = new FileInputStream(filename);
-            ObjectInputStream in = new ObjectInputStream(file_is);
-            StorageManager storage_manager = (StorageManager) in.readObject();
-            in.close();
-            file_is.close();
+
+            AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(file.toPath(), StandardOpenOption.READ);
+
+            ByteBuffer buffer = ByteBuffer.allocate(Clauses.MAX_SIZE); //TODO que valor ponho aqui?
+            long position = 0;
+
+            Future<Integer> operation = fileChannel.read(buffer, position);
+
+            while(!operation.isDone());
+
+            buffer.flip();
+            byte[] bytes = new byte[buffer.limit()];
+            buffer.get(bytes);
+            buffer.clear();
+
+            //convert byte[] to serializable StorageManager
+            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+            ObjectInput in = null;
+            StorageManager storage_manager;
+            try {
+              in = new ObjectInputStream(bais);
+              storage_manager = (StorageManager) in.readObject(); 
+            } finally {
+              try {
+                if (in != null) {
+                  in.close();
+                }
+              } catch (IOException ex) {
+                // ignore close exception
+              }
+            }
+
             StorageLogger.loadManagerOk();
             return storage_manager;
         } catch (IOException | ClassNotFoundException e) {
@@ -528,12 +611,42 @@ public class StorageManager implements java.io.Serializable {
 
     public static void saveStorageManager() {
         String filename = Peer.getID() + "_STATE.ser";
+
+        //convert serializable StorageManager to byte[]
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream out = null;
+        byte[] bytes = (new String("")).getBytes();
         try {
-            FileOutputStream file = new FileOutputStream(filename);
-            ObjectOutputStream out = new ObjectOutputStream(file);
+            out = new ObjectOutputStream(baos);   
             out.writeObject(Peer.getStorageManager());
-            out.close();
-            file.close();
+            out.flush();
+            bytes = baos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                baos.close();
+            } catch (IOException ex) {
+                // ignore close exception
+            }
+        }
+
+        //send bytes using NIO FileChannel
+        try {
+            Path path = Paths.get(filename);
+            AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+
+            ByteBuffer buffer = ByteBuffer.allocate(Clauses.MAX_SIZE);
+            long position = 0;
+
+            buffer.put(bytes);
+            buffer.flip();
+
+            Future<Integer> operation = fileChannel.write(buffer, position);
+            buffer.clear();
+
+            while(!operation.isDone());
+
             StorageLogger.saveManagerOk();
         } catch (IOException e) {
             StorageLogger.saveManagerFail();
