@@ -45,18 +45,28 @@ public class HandleInitiatorChunks implements Runnable {
             }
 
             //TODO: use CHORD to get peer holding the chunk and create socket
+            byte[] body;
+            int num_chunks = 0;
+
             try {
-                UUID hash = hashChunk(file_id,i);
-                Integer hashKey = getHashKey(hash);
-                Integer allocatedPeer = checkAllocated(hashKey); //TODO: dont use this version of the function
-                InetSocketAddress idealPeer = chord.get((allocatedPeer-1)*2); //TODO: fix value when putting together
-                client_socket = createSocket(idealPeer);
-            } catch (NoSuchAlgorithmException | IOException e) {
-                e.printStackTrace();
+                body = Peer.getStorageManager().getChunkData(file_id, i);
+                num_chunks = Peer.getStorageManager().getNumChunk(file_id, i);
+                Peer.getStorageManager().addRestoreChunkNo(file_id, num_chunks);
+                Peer.getStorageManager().addRestoredChunkRequest(file_id, i, body);
+            } catch (IOException e) {
+                try {
+                    UUID hash = hashChunk(file_id, i);
+                    Integer hashKey = getHashKey(hash);
+                    Integer allocatedPeer = checkAllocated(hashKey); //TODO: dont use this version of the function
+                    InetSocketAddress idealPeer = chord.get((allocatedPeer - 1) * 2); //TODO: fix value when putting together
+                    client_socket = createSocket(idealPeer);
+                    ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i, client_socket);
+                    Peer.getTaskManager().execute(manage_getchunk);
+                } catch (NoSuchAlgorithmException | IOException a) {
+                    a.printStackTrace();
+                }
             }
 
-            ManageGetChunk manage_getchunk = new ManageGetChunk(version, peer_id, file_id, i, client_socket);
-            Peer.getTaskManager().execute(manage_getchunk);
             i = i + 1;
             Peer.getTaskManager().schedule(new HandleInitiatorChunks(i, version, file_id, peer_id, filename), 2000, TimeUnit.MILLISECONDS);
 
