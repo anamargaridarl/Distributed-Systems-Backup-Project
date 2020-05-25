@@ -32,7 +32,7 @@ public class StorageManager implements java.io.Serializable {
     private final ConcurrentHashMap<String, Set<InetSocketAddress>> successors_stored_senders = new ConcurrentHashMap<>();
 
     //stores restored chunks - <fileid , <chunkno, body>>
-    private final transient ConcurrentHashMap<String, Map<Integer, byte[]>> restored_files = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Map<Integer, byte[]>> restored_files = new ConcurrentHashMap<>();
 
 
     //sucessors that were already contacted in the restore process
