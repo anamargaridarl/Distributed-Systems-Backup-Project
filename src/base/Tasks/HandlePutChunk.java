@@ -7,6 +7,7 @@ import base.messages.BackupMessage;
 
 import javax.net.ssl.SSLSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutionException;
 
 import static base.Clauses.NOT_INITIATOR;
 
@@ -43,7 +44,11 @@ public class HandlePutChunk implements Runnable {
         else if (!Peer.getStorageManager().hasEnoughSpace(chunk_info.getSize())) {
             TaskLogger.insufficientSpaceFail(chunk_info.getSize());
         } else {
-            processStore();
+            try {
+                processStore();
+            } catch (ExecutionException | InterruptedException e) {
+                e.printStackTrace();
+            }
             return;
         }
 
@@ -55,7 +60,7 @@ public class HandlePutChunk implements Runnable {
 
     }
 
-    private void processStore() {
+    private void processStore() throws ExecutionException, InterruptedException {
         boolean stored = Peer.getStorageManager().storeChunk(chunk_info, chunk);
         if (stored) {
             TaskLogger.storedChunkOk(chunk_info.getFileId(), chunk_info.getNumber(), chunk_info.getSize());

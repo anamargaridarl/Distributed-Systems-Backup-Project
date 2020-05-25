@@ -1,13 +1,20 @@
 package base;
 
 import java.io.File;
+import java.io.*;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.nio.channels.*;
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.concurrent.Future;
 
 import static base.Clauses.bytesToHex;
 
@@ -54,22 +61,31 @@ public class FileInformation implements Serializable {
         return desired_rep_degree;
     }
 
-    public byte[][] splitIntoChunk() throws IOException //test left chunk zero
-    {
-        byte[] file_content = Files.readAllBytes(file.toPath());
-        int file_length = file_content.length;
-        final byte[][] parts = new byte[(file_length + Clauses.MAX_SIZE) / Clauses.MAX_SIZE][];
+    public byte[][] splitIntoChunk() throws IOException{
+        double file_length = file.length();
+        int num_parts = (int)((file_length + Clauses.MAX_SIZE) / Clauses.MAX_SIZE);
+        final byte[][] parts = new byte[num_parts][];
 
-        int part_i = 0;
-        int stop_i = 0;
-        for (int start_i = 0; start_i + Clauses.MAX_SIZE <= file_length; start_i += Clauses.MAX_SIZE) {
-            stop_i += Clauses.MAX_SIZE;
-            parts[part_i++] = Arrays.copyOfRange(file_content, start_i, stop_i);
+        AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(file.toPath(), StandardOpenOption.READ);
+    
+        ByteBuffer buffer = ByteBuffer.allocate(Clauses.MAX_SIZE);
+        long position = 0;
+
+        for (int i = 0; i < num_parts; i++) {
+    
+            Future<Integer> operation = fileChannel.read(buffer, position);
+    
+            while(!operation.isDone());
+            
+            buffer.flip();
+            byte[] data = new byte[buffer.limit()];
+            buffer.get(data);
+            buffer.clear();
+
+            parts[i] = Arrays.copyOf(data, data.length);
+            position += Clauses.MAX_SIZE;
         }
-
-        if (stop_i < file_length)
-            parts[part_i] = Arrays.copyOfRange(file_content, stop_i, file_length);
-
+ 
         return parts;
     }
 

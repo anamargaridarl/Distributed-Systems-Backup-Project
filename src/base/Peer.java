@@ -104,6 +104,7 @@ public class Peer extends UnicastRemoteObject implements PeerInterface {
             byte[][] chunks = file_information.splitIntoChunk();
             file_information.setNumberChunks(chunks.length);
             Peer.getStorageManager().addFileInfo(file_information);
+
             for (int i = 0; i < chunks.length; i++) {
                 //TODO: use CHORD to lookup peers addresses and create sockets
                 SSLSocket taskSocket = getChunkSocket(file_information.getFileId(), i);
