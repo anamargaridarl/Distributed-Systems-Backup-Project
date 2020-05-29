@@ -3,27 +3,29 @@ package base.Tasks;
 import base.ChunkInfo;
 import base.Peer;
 import base.TaskLogger;
+import base.chord.ChordIdentifier;
 
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
 import static base.Clauses.*;
 
 public class ManageBackupAuxiliar implements Runnable {
 
-  private SSLSocket initiatorSocket;
+  private int offset;
+  private final SSLSocket initiatorSocket;
   private final ChunkInfo chunkInfo;
   private final byte[] chunk;
-  private int nSuccsTried;
+  private int nTry;
 
   public ManageBackupAuxiliar(ChunkInfo chunk_info, byte[] chunk, SSLSocket initiatorSocket) {
     this.chunk = chunk;
     this.chunkInfo = chunk_info;
     this.initiatorSocket = initiatorSocket;
-    nSuccsTried = 0;
+    nTry = 0;
+    offset = 0;
   }
 
   public ManageBackupAuxiliar(ChunkInfo chunkInfo, byte[] chunk) {
@@ -34,28 +36,30 @@ public class ManageBackupAuxiliar implements Runnable {
   public void run() {
     int currRep =  Peer.getStorageManager().getChunkRepDegree(chunkInfo.getFileId(), chunkInfo.getNumber());
     int succNeeded = chunkInfo.getRepDeg() - currRep;
-    int nSuccessors = succNeeded < chord.size() ? succNeeded : 0;
+    ChordIdentifier[] successors = Peer.getChordManager().getAllSuccessors(succNeeded, offset);
+    if(succNeeded > 0 && successors.length < succNeeded) {
+      TaskLogger.repDegreeNotEnough();
+    }
 
-    if (nSuccessors > 0 && nSuccsTried < chord.size()) { //TODO: use a better way to capsize tries
-      for (int i = 1; i <= nSuccessors; i++) {
-        if (nSuccsTried > chord.size()) {
-          return;
-        }
+    if (succNeeded > 0 && nTry < 3) {
+      for (ChordIdentifier succID : successors) {
         try {
-          //TODO: substitute with chord get Next successor
-          InetSocketAddress succ = chord.get(((Peer.getID() + nSuccsTried + i - 1) % 4 * 2));
+          InetSocketAddress succ = Peer.getChordManager().lookup(succID.getIdentifier());
           SSLSocket sock = createSocket(succ);
-          Peer.getTaskManager().execute(new ManagePutChunk(VANILLA_VERSION, NOT_INITIATOR, chunkInfo.getFileId(), chunkInfo.getNumber(), chunkInfo.getRepDeg(), chunkInfo.getNumber_chunks(), chunk, sock));
-          nSuccsTried++;
+          Peer.getTaskManager().execute(new ManagePutChunk(NOT_INITIATOR, chunkInfo.getFileId(), chunkInfo.getNumber(), chunkInfo.getRepDeg(), chunkInfo.getNumber_chunks(), chunk, sock));
         } catch (IOException e) {
           e.printStackTrace();
         }
       }
+      nTry++;
+      offset += succNeeded;
       Peer.getTaskManager().schedule(this, TIMEOUT, TimeUnit.MILLISECONDS);
     } else if(initiatorSocket != null) {
-      Peer.getTaskManager().execute(new ManageStored(Peer.getVersion(),currRep,chunkInfo.getFileId(),chunkInfo.getNumber(),initiatorSocket));
-    } else if(nSuccsTried> 0 && succNeeded == 0){
-      TaskLogger.putChunkOk();
+        Peer.getTaskManager().execute(new ManageStored(currRep,chunkInfo.getFileId(),chunkInfo.getNumber(),initiatorSocket));
+    } else if(succNeeded == 0){
+      TaskLogger.putChunkOk(chunkInfo.getFileId(),chunkInfo.getNumber());
+    } else {
+      TaskLogger.putChunkFail(chunkInfo.getFileId(),chunkInfo.getNumber());
     }
   }
 }

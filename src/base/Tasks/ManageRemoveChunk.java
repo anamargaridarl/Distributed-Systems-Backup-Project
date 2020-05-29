@@ -4,6 +4,7 @@ import base.ChunkInfo;
 import base.Peer;
 import base.channel.MessageSender;
 import base.messages.MessageChunkNo;
+import base.messages.RemovedMessage;
 
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
@@ -16,29 +17,26 @@ import static base.Clauses.*;
 
 public class ManageRemoveChunk implements Runnable {
 
-  private final ChunkInfo removedChunk;
+    private final ChunkInfo removedChunk;
 
-  public ManageRemoveChunk(ChunkInfo removed) {
-    removedChunk = removed;
-  }
-
-  //TODO: get info about who to send removed message
-  @Override
-  public void run() {
-    try {
-      UUID chunkHash = hashChunk(removedChunk.getFileId(), removedChunk.getNumber());
-      Integer hashKey = getHashKey(chunkHash);
-      int allocated = checkAllocated(hashKey);
-      if (allocated == Peer.getID()) {
-        Peer.getTaskManager().execute(new ManageBackupAuxiliar(removedChunk, removedChunk.getChunk()));
-      } else {
-        MessageChunkNo removedMsg = new MessageChunkNo(VANILLA_VERSION, REMOVED, Peer.getID(), removedChunk.getFileId(), removedChunk.getNumber());
-        InetSocketAddress idealPeer = chord.get((allocated-1)*2); //TODO: replace with CHORD methods to obtain peer address
-        SSLSocket peerSocket = createSocket(idealPeer);
-        Peer.getTaskManager().execute(new MessageSender(peerSocket, removedMsg));
-      }
-    } catch (NoSuchAlgorithmException | IOException e) {
-      e.printStackTrace();
+    public ManageRemoveChunk(ChunkInfo removed) {
+        removedChunk = removed;
     }
-  }
+
+    @Override
+    public void run() {
+        try {
+            UUID chunkHash = hashChunk(removedChunk.getFileId(), removedChunk.getNumber());
+            InetSocketAddress allocatedHost = Peer.getChordManager().lookup(chunkHash);
+            if (allocatedHost.equals(Peer.getChordManager().getPeerID().getOwnerAddress())) {
+                Peer.getTaskManager().execute(new ManageBackupAuxiliar(removedChunk, removedChunk.getChunk()));
+            } else {
+                RemovedMessage removedMsg = new RemovedMessage(REMOVED, Peer.getID(), removedChunk.getFileId(), removedChunk.getNumber(), removedChunk);
+                SSLSocket peerSocket = createSocket(allocatedHost);
+                Peer.getTaskManager().execute(new MessageSender(peerSocket, removedMsg));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

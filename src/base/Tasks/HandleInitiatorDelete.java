@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import static base.Clauses.*;
 
-public class HandleInitiatorDelete implements Runnable{
+public class HandleInitiatorDelete implements Runnable {
     private int i;
     private final String file_id;
 
@@ -26,19 +26,17 @@ public class HandleInitiatorDelete implements Runnable{
         int deleteChunkNum = Peer.getStorageManager().getDeleteChunkNum(file_id);
         if (i < deleteChunkNum || i == 0) {
             try {
-                UUID hash = hashChunk(file_id,i);
-                int hashKey = getHashKey(hash);
-                int allocatedPeer = checkAllocated(hashKey);
-                if(allocatedPeer == Peer.getID()) {
-                    Peer.getTaskManager().execute(new HandleDeleteFile(file_id,i));
+                UUID hash = hashChunk(file_id, i);
+                InetSocketAddress allocatedPeer = Peer.getChordManager().lookup(hash);
+                if (allocatedPeer.equals(Peer.getChordManager().getPeerID().getOwnerAddress())) {
+                    Peer.getTaskManager().execute(new HandleDeleteFile(file_id, i));
                 } else {
-                    InetSocketAddress idealPeer = chord.get((allocatedPeer -1) *2); //TODO: replace with CHORD lookup for peer key
-                    SSLSocket client_socket = createSocket(idealPeer);
-                    Peer.getTaskManager().execute(new ManageDeleteFile(VANILLA_VERSION, Peer.getID(), file_id, i , client_socket));
+                    SSLSocket client_socket = createSocket(allocatedPeer);
+                    Peer.getTaskManager().execute(new ManageDeleteFile(Peer.getID(), file_id, i, client_socket));
                 }
                 i++;
                 Peer.getTaskManager().schedule(this, TIMEOUT, TimeUnit.MILLISECONDS);
-            } catch (NoSuchAlgorithmException | IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 

@@ -6,7 +6,6 @@ import base.channel.MessageSender;
 import base.messages.MessageChunkNo;
 
 import javax.net.ssl.SSLSocket;
-import java.net.Socket;
 
 import static base.Clauses.*;
 
@@ -15,17 +14,17 @@ import static base.Clauses.*;
  */
 public class ManageSuccGetChunk implements Runnable {
 
-  private final MessageChunkNo succGetChunk;
-  private final SSLSocket client_socket;
+    private final MessageChunkNo succGetChunk;
+    private final SSLSocket client_socket;
 
-  public ManageSuccGetChunk(String file_id, int chunk_no, SSLSocket client) {
-    succGetChunk = new MessageChunkNo(VANILLA_VERSION,SUCCGETCHUNK,Peer.getID(),file_id,chunk_no);
-    client_socket = client;
-  }
+    public ManageSuccGetChunk(String file_id, int chunk_no, SSLSocket client) {
+        succGetChunk = new MessageChunkNo(SUCCGETCHUNK, Peer.getID(), file_id, chunk_no);
+        client_socket = client;
+    }
 
-  @Override
-  public void run() {
-    Peer.getTaskManager().execute(new MessageSender(client_socket, succGetChunk));
-    Peer.getTaskManager().execute(new MessageReceiver(client_socket));
-  }
+    @Override
+    public void run() {
+        Peer.getTaskManager().execute(new MessageSender(client_socket, succGetChunk));
+        Peer.getTaskManager().execute(new MessageReceiver(client_socket));
+    }
 }

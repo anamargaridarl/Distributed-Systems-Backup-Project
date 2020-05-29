@@ -11,7 +11,7 @@ import java.net.Socket;
 
 import static base.Clauses.createSocket;
 
-public class HandleInfoToInitiator implements Runnable{
+public class HandleInfoToInitiator implements Runnable {
 
 
     private InfoMessage info_message;
@@ -24,7 +24,7 @@ public class HandleInfoToInitiator implements Runnable{
     public void run() {
         try {
             SSLSocket socket = createSocket(info_message.getAddress());
-            Peer.getTaskManager().execute(new ManageGetChunk(info_message.getVersion(),info_message.getSenderId(),info_message.getFileId(),info_message.getNumber(),socket));
+            Peer.getTaskManager().execute(new ManageGetChunk(info_message.getSenderId(), info_message.getFileId(), info_message.getNumber(), socket));
         } catch (IOException e) {
             e.printStackTrace();
         }

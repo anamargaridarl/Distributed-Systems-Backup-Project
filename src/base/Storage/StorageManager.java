@@ -6,6 +6,7 @@ import base.Peer;
 import base.StorageLogger;
 import base.Tasks.ManageDeleteFile;
 import base.*;
+import base.Tasks.ManageNumDeleteReply;
 import base.messages.MessageChunkNo;
 
 import javax.net.ssl.SSLSocket;
@@ -29,11 +30,16 @@ public class StorageManager implements java.io.Serializable {
     private final HashSet<FileInformation> files_info;
     private final ArrayList<ChunkInfo> chunks_info;
     private final ConcurrentHashMap<String, Integer> rep_degrees;
-    private final ArrayList<String> delete_requests = new ArrayList<>();
 
     //store "STORED MESSAGES" occurrences from distinct senders (by their id)
     private final ConcurrentHashMap<String, InetSocketAddress> stored_senders = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Set<InetSocketAddress>> successors_stored_senders = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, InetSocketAddress> initiators = new ConcurrentHashMap<>();
+
+    //backup stored senders from the successor (FAULT TOLERANCE)
+    private ConcurrentHashMap<String, InetSocketAddress> bckup_stored_senders = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, Set<InetSocketAddress>> bckup_successors_stored_senders = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, InetSocketAddress> bckup_initiators = new ConcurrentHashMap<>();
 
     //stores restored chunks - <fileid , <chunkno, body>>
     private final ConcurrentHashMap<String, Map<Integer, byte[]>> restored_files = new ConcurrentHashMap<>();
@@ -52,7 +58,6 @@ public class StorageManager implements java.io.Serializable {
 
 
     private final ArrayList<String> restore_request = new ArrayList<>(); //old??
-    private final transient Set<String> stored_chunk_request = new HashSet<>();
 
     private int total_space = DEFAULT_STORAGE;
     private int occupied_space = 0;
@@ -64,7 +69,6 @@ public class StorageManager implements java.io.Serializable {
     }
 
 
-    //shared functions
     public byte[] getChunkData(String file_id, int number) throws IOException {
         String chunk_filename = Peer.getID() + "_STORAGE/" + file_id + ":" + number;
         Path path = Paths.get(chunk_filename);
@@ -74,7 +78,7 @@ public class StorageManager implements java.io.Serializable {
         long position = 0;
 
         Future<Integer> operation = fileChannel.read(buffer, position);
-        while(!operation.isDone());
+        while (!operation.isDone()) ;
 
         buffer.flip();
         byte[] data = new byte[buffer.limit()];
@@ -88,9 +92,7 @@ public class StorageManager implements java.io.Serializable {
     public int getOccupiedSpace() {
         return occupied_space;
     }
-    //end shared functions
 
-    //backup functions
     public boolean ownsFile(String file_id) {
         for (FileInformation file_info : files_info) {
             if (file_info.getFileId().equals(file_id)) {
@@ -162,7 +164,7 @@ public class StorageManager implements java.io.Serializable {
         }
     }
 
-    private static class ChunkWriteHandler implements CompletionHandler<Integer,Object> {
+    private static class ChunkWriteHandler implements CompletionHandler<Integer, Object> {
 
         private final ChunkInfo chunk_info;
 
@@ -194,14 +196,14 @@ public class StorageManager implements java.io.Serializable {
                 chunk.createNewFile();
             }
 
-            AsynchronousFileChannel outChannel = AsynchronousFileChannel.open(chunk.toPath(), StandardOpenOption.WRITE,StandardOpenOption.CREATE);
+            AsynchronousFileChannel outChannel = AsynchronousFileChannel.open(chunk.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
             ByteBuffer buf = ByteBuffer.allocate(Clauses.MAX_SIZE);
             buf.clear();
             buf.put(chunk_data);
             buf.flip();
 
-            outChannel.write(buf,0,null, new ChunkWriteHandler(chunk_info));
+            outChannel.write(buf, 0, null, new ChunkWriteHandler(chunk_info));
 
         } catch (IOException e) {
             StorageLogger.storeChunkFail();
@@ -211,7 +213,7 @@ public class StorageManager implements java.io.Serializable {
 
         Future<Boolean> stored = Peer.getTaskManager().schedule(() -> {
             return this.chunks_info.contains(chunk_info);
-        },400, TimeUnit.MILLISECONDS);
+        }, 100, TimeUnit.MILLISECONDS);
         return stored.get();
     }
 
@@ -230,15 +232,16 @@ public class StorageManager implements java.io.Serializable {
         occupied_space += size;
     }
 
-    //backup-stored
     public synchronized void handleStoredSendersOccurrence(String file_id, int number, int sender_id, InetSocketAddress origin) {
         String chunk_ref = makeChunkRef(file_id, number);
         if (sender_id == NOT_INITIATOR) {
             if (!successors_stored_senders.containsKey(chunk_ref))
                 return;
-            successors_stored_senders.get(chunk_ref).add(origin);
-            int newValue = rep_degrees.get(chunk_ref) + successors_stored_senders.get(chunk_ref).size();
-            rep_degrees.put(chunk_ref, newValue);
+            if (successors_stored_senders.get(chunk_ref).add(origin)) {
+                ChunkInfo dummyCI = new ChunkInfo(file_id, 0, 0, number, 0);
+                int newValue = successors_stored_senders.get(chunk_ref).size() + (existsChunk(dummyCI) ? 1 : 0);
+                rep_degrees.put(chunk_ref, newValue);
+            }
         } else {
             if (!stored_senders.containsKey(chunk_ref))
                 return;
@@ -254,7 +257,7 @@ public class StorageManager implements java.io.Serializable {
         if (suc != null) {
             for (InetSocketAddress peer : suc) {
                 SSLSocket socket = createSocket(peer);
-                Peer.getTaskManager().execute(new ManageDeleteFile(VANILLA_VERSION, NOT_INITIATOR, file_id, number, socket));
+                Peer.getTaskManager().execute(new ManageDeleteFile(NOT_INITIATOR, file_id, number, socket));
             }
             successors_stored_senders.remove(chunk_ref);
         }
@@ -264,14 +267,10 @@ public class StorageManager implements java.io.Serializable {
         InetSocketAddress idealPeer = stored_senders.get(chunk_ref);
         if (idealPeer != null) {
             SSLSocket socket = createSocket(idealPeer);
-            Peer.getTaskManager().execute(new ManageDeleteFile(VANILLA_VERSION, Peer.getID(), file_id, number, socket));
+            Peer.getTaskManager().execute(new ManageDeleteFile(Peer.getID(), file_id, number, socket));
             stored_senders.remove(chunk_ref);
         }
 
-    }
-
-    public ArrayList<String> getDeleteRequests() {
-        return delete_requests;
     }
 
     public synchronized void deleteChunks(String file_id, int chunk_no) {
@@ -289,6 +288,14 @@ public class StorageManager implements java.io.Serializable {
 
     public boolean existsChunk(ChunkInfo chunk) {
         return chunks_info.contains(chunk);
+    }
+
+    public boolean existsChunk(String chunk_ref) {
+        for (ChunkInfo chunk : chunks_info) {
+            String storedChunkRed = makeChunkRef(chunk.getFileId(), chunk.getNumber());
+            if (storedChunkRed.equals(chunk_ref)) return true;
+        }
+        return false;
     }
 
     public synchronized InetSocketAddress handleGetChunk(MessageChunkNo msg) throws IOException {
@@ -326,7 +333,8 @@ public class StorageManager implements java.io.Serializable {
                 return chunkInfo.getNumber_chunks();
             }
         }
-        return -1;
+        return delete_chunk_num.getOrDefault(file_id, restore_chunk_num.getOrDefault(file_id, -1));
+
     }
 
     private void removeChunkFile(String file_id, int chunk_number) {
@@ -342,44 +350,12 @@ public class StorageManager implements java.io.Serializable {
     public boolean hasEnoughSpace(int size) {
         return occupied_space + size <= total_space * KB; // 1MB of safety net
     }
-    //end backup functions
-
-    //delete functions
-    public void addDeleteRequest(String fileId) {
-        if (!delete_requests.contains(fileId)) {
-            delete_requests.add(fileId);
-        }
-    }
-
-
-    public boolean isRepDegreeLow(String file_id, int number) {
-        String chunk_ref = makeChunkRef(file_id, number);
-        if (rep_degrees.containsKey(chunk_ref)) {
-            int rep_degree = rep_degrees.get(chunk_ref);
-            for (ChunkInfo chunk_info : chunks_info) {
-                if (chunk_info.getFileId().equals(file_id)
-                        && chunk_info.getNumber() == number) {
-                    if (rep_degree < chunk_info.getRepDeg()) {
-                        return true;
-                    }
-                    break;
-                }
-            }
-        } else {
-            return true;
-        }
-        return false;
-    }
 
     public synchronized void decrementRepDegree(String file_id, int number) {
         String chunk_ref = makeChunkRef(file_id, number);
         if (rep_degrees.containsKey(chunk_ref)) {
-            if (rep_degrees.get(chunk_ref) == 1) {
-                rep_degrees.remove(chunk_ref);
-            } else {
-                int rep_degree = rep_degrees.get(chunk_ref) - 1;
-                rep_degrees.replace(chunk_ref, rep_degree);
-            }
+            int rep_degree = rep_degrees.get(chunk_ref) - 1;
+            rep_degrees.replace(chunk_ref, Math.max(rep_degree, 0));
         }
     }
 
@@ -388,7 +364,6 @@ public class StorageManager implements java.io.Serializable {
         rep_degrees.remove(chunk_ref);
     }
 
-    //Replication degree functions
     public Integer getChunkRepDegree(String file_id, int number) {
         String chunk_ref = makeChunkRef(file_id, number);
         return rep_degrees.getOrDefault(chunk_ref, 0);
@@ -429,10 +404,6 @@ public class StorageManager implements java.io.Serializable {
         return null;
     }
 
-
-    //reclaim functions
-
-    //state functions
     public HashSet<FileInformation> getFilesInfo() {
         return files_info;
     }
@@ -449,37 +420,8 @@ public class StorageManager implements java.io.Serializable {
         occupied_space -= size;
     }
 
-
-    public void addRestoreRequest(String file_id, Integer peer_id) {
-        restore_request.add(makeRestoreRef(file_id, peer_id));
-    }
-
-    public byte[] getRestoredChunk(String file_id, Integer chunk_no) {
-        if (restored_files.containsKey(file_id)) {
-            return restored_files.get(file_id).getOrDefault(chunk_no, null);
-        }
-        return null;
-    }
-
     public void removeRestoreRequest(String file_id, Integer peer_id) {
         restore_request.remove(makeRestoreRef(file_id, peer_id));
-    }
-
-    public boolean checkLastChunk(String file_id) {
-        Map<Integer, byte[]> chunk = restored_files.get(file_id);
-        for (int i = 0; i < chunk.size(); i++) {
-            if (chunk.get(i).length == 0) {
-                chunk.remove(chunk.get(i));
-                restored_files.replace(file_id, chunk);
-            }
-            if (chunk.get(i).length < MAX_SIZE)
-                return true;
-        }
-        return false;
-    }
-
-    public boolean existsRestoreRequest(String file_id, Integer peer_id) {
-        return restore_request.contains(makeRestoreRef(file_id, peer_id));
     }
 
     public boolean existsChunkRestore(String file_id, int chunk_no) {
@@ -487,14 +429,6 @@ public class StorageManager implements java.io.Serializable {
         for (ChunkInfo info : chunks_info) {
             if (info.validateChunk(file_id, chunk_no))
                 return true;
-        }
-        return false;
-    }
-
-    public boolean checkReceiveChunk(String file_id, Integer chunk_no) {
-        if (restored_files.containsKey(file_id)) {
-            Map<Integer, byte[]> chunk = restored_files.get(file_id);
-            return chunk.get(chunk_no) != null;
         }
         return false;
     }
@@ -515,7 +449,7 @@ public class StorageManager implements java.io.Serializable {
             file.createNewFile();
         }
 
-        AsynchronousFileChannel fileChannel =  AsynchronousFileChannel.open(file.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+        AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(file.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE);
         long position = 0;
 
         for (int i = 0; i < number_chunks; i++) {
@@ -526,15 +460,13 @@ public class StorageManager implements java.io.Serializable {
 
             Future<Integer> operation = fileChannel.write(buffer, position);
             buffer.clear();
-            while(!operation.isDone());
+            while (!operation.isDone()) ;
             position += Clauses.MAX_SIZE;
         }
 
         StorageLogger.restoreFileOk(filename);
         removeRestoredChunkData(fileid);
         removeRestoreRequest(fileid, Peer.getID());
-
-
     }
 
     public void addRestoredChunkRequest(String fileId, int number, byte[] body) {
@@ -577,7 +509,7 @@ public class StorageManager implements java.io.Serializable {
 
             Future<Integer> operation = fileChannel.read(buffer, position);
 
-            while(!operation.isDone());
+            while (!operation.isDone()) ;
 
             buffer.flip();
             byte[] bytes = new byte[buffer.limit()];
@@ -589,16 +521,16 @@ public class StorageManager implements java.io.Serializable {
             ObjectInput in = null;
             StorageManager storage_manager;
             try {
-              in = new ObjectInputStream(bais);
-              storage_manager = (StorageManager) in.readObject(); 
+                in = new ObjectInputStream(bais);
+                storage_manager = (StorageManager) in.readObject();
             } finally {
-              try {
-                if (in != null) {
-                  in.close();
+                try {
+                    if (in != null) {
+                        in.close();
+                    }
+                } catch (IOException ex) {
+                    // ignore close exception
                 }
-              } catch (IOException ex) {
-                // ignore close exception
-              }
             }
 
             StorageLogger.loadManagerOk();
@@ -617,7 +549,7 @@ public class StorageManager implements java.io.Serializable {
         ObjectOutputStream out = null;
         byte[] bytes = (new String("")).getBytes();
         try {
-            out = new ObjectOutputStream(baos);   
+            out = new ObjectOutputStream(baos);
             out.writeObject(Peer.getStorageManager());
             out.flush();
             bytes = baos.toByteArray();
@@ -645,7 +577,7 @@ public class StorageManager implements java.io.Serializable {
             Future<Integer> operation = fileChannel.write(buffer, position);
             buffer.clear();
 
-            while(!operation.isDone());
+            while (!operation.isDone()) ;
 
             StorageLogger.saveManagerOk();
         } catch (IOException e) {
@@ -683,6 +615,51 @@ public class StorageManager implements java.io.Serializable {
     public void addDeleteChunkNo(String file_id, int num) {
         delete_chunk_num.putIfAbsent(file_id, num);
     }
-    //end save information when peer is off functions
+
+    public void addInitiator(String file_id, int num, InetSocketAddress initiator) {
+        String chunk_ref = makeChunkRef(file_id, num);
+        initiators.put(chunk_ref, initiator);
+    }
+
+    public InetSocketAddress getInitiator(String file_id, int num) {
+        String chunk_ref = makeChunkRef(file_id, num);
+        return initiators.getOrDefault(chunk_ref, null);
+    }
+
+    public ConcurrentHashMap<String, InetSocketAddress> getStoredSenders() {
+        return stored_senders;
+    }
+
+    public ConcurrentHashMap<String, Set<InetSocketAddress>> getSuccessorsStoredSenders() {
+        return successors_stored_senders;
+    }
+
+    public ConcurrentHashMap<String, InetSocketAddress> getInitiators() {
+        return initiators;
+    }
+
+    public ConcurrentHashMap<String, InetSocketAddress> getBckupStoredSenders() {
+        return bckup_stored_senders;
+    }
+
+    public ConcurrentHashMap<String, Set<InetSocketAddress>> getBckupSuccessorsStoredSenders() {
+        return bckup_successors_stored_senders;
+    }
+
+    public ConcurrentHashMap<String, InetSocketAddress> getBckupInitiators() {
+        return bckup_initiators;
+    }
+
+    public void setBckupStoredSenders(ConcurrentHashMap<String, InetSocketAddress> st_senders) {
+        this.bckup_stored_senders = st_senders;
+    }
+
+    public void setBckupSuccessorsStoredSenders(ConcurrentHashMap<String, Set<InetSocketAddress>> bckup_successors_stored_senders) {
+        this.bckup_successors_stored_senders = bckup_successors_stored_senders;
+    }
+
+    public void setBckupInitiators(ConcurrentHashMap<String, InetSocketAddress> bckup_initiators) {
+        this.bckup_initiators = bckup_initiators;
+    }
 }
 

@@ -9,7 +9,6 @@ import base.messages.BackupMessage;
 
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
-import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
 import static base.Clauses.*;
@@ -21,11 +20,11 @@ public class ManagePutChunk implements Runnable {
 
     private final SSLSocket client_socket;
     private final BackupMessage bk_message;
-    private int n_try;
+    private boolean alreadySent;
 
-    public ManagePutChunk(String v, int sid, String fid, int chunkno, int repd, int n_chunks, byte[] bdy, SSLSocket  client) throws IOException {
-        bk_message = new BackupMessage(v, PUTCHUNK, sid, fid, chunkno, repd, n_chunks, bdy);
-        n_try = 0;
+    public ManagePutChunk(int sid, String fid, int chunkno, int repd, int n_chunks, byte[] bdy, SSLSocket client) throws IOException {
+        bk_message = new BackupMessage(PUTCHUNK, sid, fid, chunkno, repd, n_chunks, bdy);
+        alreadySent = false;
         client_socket = client;
     }
 
@@ -42,20 +41,20 @@ public class ManagePutChunk implements Runnable {
         int curr_rep_degree = Peer.getStorageManager().getCurrentRepDegree(bk_message.getFileId(), bk_message.getNumber());
         if (curr_rep_degree < bk_message.getReplicationDeg()) {
 
-            if (n_try < 1) {
-                Peer.getTaskManager().execute(new MessageSender(client_socket,bk_message));
-                Peer.getStorageManager().addStoredChunkRequest(bk_message.getFileId(), bk_message.getNumber(),bk_message.getSenderId());
+            if (!alreadySent) {
+                Peer.getTaskManager().execute(new MessageSender(client_socket, bk_message));
+                Peer.getStorageManager().addStoredChunkRequest(bk_message.getFileId(), bk_message.getNumber(), bk_message.getSenderId());
                 Peer.getTaskManager().execute(new MessageReceiver(client_socket));
-                if(bk_message.getSenderId() != NOT_INITIATOR) {
-                    Peer.getTaskManager().schedule(this, (long) (TIMEOUT*3), TimeUnit.MILLISECONDS);
-                    n_try++;
+                if (bk_message.getSenderId() != NOT_INITIATOR) {
+                    Peer.getTaskManager().schedule(this, (long) (TIMEOUT * 3), TimeUnit.MILLISECONDS);
+                    alreadySent = true;
                 }
             } else {
                 Peer.getStorageManager().removeStoredOccurrenceChunk(bk_message.getFileId(), bk_message.getNumber());
                 throw new FailedPutChunk();
             }
         } else {
-            TaskLogger.putChunkOk();
+            TaskLogger.putChunkOk(bk_message.getFileId(), bk_message.getNumber());
 
         }
     }

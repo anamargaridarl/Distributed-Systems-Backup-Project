@@ -3,7 +3,6 @@ package base.Tasks;
 import base.Peer;
 import base.messages.MessageChunkNo;
 
-import java.net.InetSocketAddress;
 
 /*
     Class that processes stored messages

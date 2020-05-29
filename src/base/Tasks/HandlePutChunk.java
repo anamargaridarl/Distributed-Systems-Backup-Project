@@ -6,6 +6,7 @@ import base.TaskLogger;
 import base.messages.BackupMessage;
 
 import javax.net.ssl.SSLSocket;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.concurrent.ExecutionException;
 
@@ -16,18 +17,18 @@ import static base.Clauses.NOT_INITIATOR;
  */
 public class HandlePutChunk implements Runnable {
 
-    private final String version;
     private final int sender_id;
     private final ChunkInfo chunk_info;
     private final byte[] chunk;
     private final SSLSocket client_socket;
+    private final InetSocketAddress origin;
 
     public HandlePutChunk(BackupMessage message, SSLSocket socket) {
         this.sender_id = message.getSenderId();
-        this.version = message.getVersion();
         this.chunk_info = new ChunkInfo(message.getFileId(), message.getReplicationDeg(), message.getBody().length, message.getNumber(), message.getNumberChunks());
         this.chunk = message.getBody();
         this.client_socket = socket;
+        this.origin = message.getOrigin();
     }
 
     @Override
@@ -36,9 +37,10 @@ public class HandlePutChunk implements Runnable {
         if (Peer.getStorageManager().ownsFile(chunk_info.getFileId())) {
             TaskLogger.ownsFile(chunk_info.getFileId());
         }
-        //check if the peer already has the chunk TODO: or has references of the same
+        //check if the peer already has the chunk
         else if (Peer.getStorageManager().existsChunk(chunk_info)) {
             TaskLogger.alreadyBackedUp(Peer.getID(), chunk_info.getFileId(), chunk_info.getNumber());
+            Peer.getTaskManager().execute(new ManageStored(NOT_INITIATOR, chunk_info.getFileId(), chunk_info.getNumber(), client_socket));
         }
         //check if there is space enough in the storage
         else if (!Peer.getStorageManager().hasEnoughSpace(chunk_info.getSize())) {
@@ -53,9 +55,10 @@ public class HandlePutChunk implements Runnable {
         }
 
         if (sender_id != NOT_INITIATOR) {
-            Peer.getTaskManager().execute(new ManageBackupAuxiliar(chunk_info,chunk, client_socket));
+            Peer.getStorageManager().addInitiator(chunk_info.getFileId(), chunk_info.getNumber(), origin);
+            Peer.getTaskManager().execute(new ManageBackupAuxiliar(chunk_info, chunk, client_socket));
         } else {
-            Peer.getTaskManager().execute(new ManageDeclined(version, NOT_INITIATOR,chunk_info.getFileId(), chunk_info.getNumber(),client_socket));
+            Peer.getTaskManager().execute(new ManageDeclined(NOT_INITIATOR, chunk_info.getFileId(), chunk_info.getNumber(), client_socket));
         }
 
     }
@@ -71,9 +74,10 @@ public class HandlePutChunk implements Runnable {
         }
 
         if (sender_id != NOT_INITIATOR) {
-            Peer.getTaskManager().execute(new ManageBackupAuxiliar(chunk_info,chunk, client_socket));
+            Peer.getStorageManager().addInitiator(chunk_info.getFileId(), chunk_info.getNumber(), origin);
+            Peer.getTaskManager().execute(new ManageBackupAuxiliar(chunk_info, chunk, client_socket));
         } else {
-            Peer.getTaskManager().execute(new ManageStored(version, NOT_INITIATOR, chunk_info.getFileId(), chunk_info.getNumber(), client_socket));
+            Peer.getTaskManager().execute(new ManageStored(NOT_INITIATOR, chunk_info.getFileId(), chunk_info.getNumber(), client_socket));
         }
     }
 }

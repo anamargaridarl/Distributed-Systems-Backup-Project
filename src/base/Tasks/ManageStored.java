@@ -7,20 +7,19 @@ import base.channel.MessageSender;
 import base.messages.MessageChunkNo;
 
 import javax.net.ssl.SSLSocket;
-import java.net.Socket;
 
 public class ManageStored implements Runnable {
 
-  private final MessageChunkNo st_message;
-  private final SSLSocket client_socket;
+    private final MessageChunkNo st_message;
+    private final SSLSocket client_socket;
 
-  public ManageStored(String v, int sid, String fid, int chunkno, SSLSocket socket) {
-    st_message = new MessageChunkNo(v, STORED, sid, fid, chunkno);
-    client_socket = socket;
-  }
+    public ManageStored(int sid, String fid, int chunkno, SSLSocket socket) {
+        st_message = new MessageChunkNo(STORED, sid, fid, chunkno);
+        client_socket = socket;
+    }
 
-  @Override
-  public void run() {
-    Peer.getTaskManager().execute(new MessageSender(client_socket, st_message));
-  }
+    @Override
+    public void run() {
+        Peer.getTaskManager().execute(new MessageSender(client_socket, st_message));
+    }
 }
