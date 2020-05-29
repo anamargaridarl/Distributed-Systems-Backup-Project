@@ -1,6 +1,7 @@
 package base.Tasks;
 
 import base.Peer;
+import base.PeerLogger;
 import base.channel.MessageSender;
 import base.messages.BackupTablesMessage;
 
@@ -18,7 +19,7 @@ public class ManageBackupTables implements Runnable {
             BackupTablesMessage bt_message = new BackupTablesMessage();
             Peer.getTaskManager().execute(new MessageSender(succSocket, bt_message));
         } catch (IOException e) {
-            e.printStackTrace();
+            PeerLogger.channelsDisrupt();
         }
     }
 }
