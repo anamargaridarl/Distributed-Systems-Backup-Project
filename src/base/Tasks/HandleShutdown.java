@@ -14,8 +14,10 @@ public class HandleShutdown extends Thread {
         try {
             TaskLogger.startShutdown(TIMEOUT);
             Peer.getTaskManager().execute(new SaveState());
+            Peer.getChordManager().disconnect();
             Peer.getTaskManager().shutdown();
             Peer.getTaskManager().awaitTermination(TIMEOUT, TimeUnit.MILLISECONDS);
+
             TaskLogger.shutdownOk();
         } catch (InterruptedException e) {
             TaskLogger.forcedShutdown();

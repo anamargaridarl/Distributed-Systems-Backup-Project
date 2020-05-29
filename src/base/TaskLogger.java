@@ -35,8 +35,8 @@ public class TaskLogger extends Logger {
         error("Failed to obtain desired replication degree File id: " + file_id + "\tNr: " + number);
     }
 
-    public static void putChunkOk() {
-        success("Replication degree was obtained successfully");
+    public static void putChunkOk(String file_id, int number) {
+        success("Replication degree for File id: " + file_id + "\tNr: " + number + " was obtained successfully");
     }
 
     public static void ownsFile(String file_id) {
@@ -89,8 +89,8 @@ public class TaskLogger extends Logger {
         error("Failed to accept client socket and establish TCP connection");
     }
 
-    public static void getChunkRetrieveFail() {
-        error("Failed to retrieve chunk to send, aborting");
+    public static void getChunkRetrieveFail(String file_id, int number) {
+        error("Failed to retrieve chunk " + file_id + "\tNr: " + number + " to send, aborting");
     }
 
     public static void noChunkReceivedFail() {
@@ -110,4 +110,14 @@ public class TaskLogger extends Logger {
         warning("Chunk Replication Degree is low, initiating Backup");
     }
 
+    public static void noChunk(String file_id,int number) {
+        error("Chunk not found. File ID: " + file_id + " Nr: " + number);
+    }
+    public static void failedConnection() {
+        error("Join TIMED OUT...\nThe known Peer Address inserted isn't responding, please try again later, or try connecting to another known Address");
+    }
+
+    public static void repDegreeNotEnough() {
+        warning("Not enough peers to meet desired replication degree.");
+    }
 }

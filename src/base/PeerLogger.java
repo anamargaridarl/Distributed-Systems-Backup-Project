@@ -24,4 +24,13 @@ public class PeerLogger extends Logger {
     public static void missingFile(String pathname) {
         error("There is no such file: " + pathname);
     }
+
+    public static void channelsDisrupt() {
+        warning("Sudden disruption of the communication");
+    }
+
+    public static void disconnectPeer() {
+        warning("Peer disconnected while sending message");
+    }
+
 }

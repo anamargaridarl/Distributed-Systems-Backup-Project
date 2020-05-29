@@ -16,6 +16,6 @@ public class HandleNumDeleteReply implements Runnable {
 
     @Override
     public void run() {
-        Peer.getStorageManager().addDeleteChunkNo(msg_dreply.getFileId(),msg_dreply.getNumChunks()); //TODO: pass sender id name to a more generic value name
+        Peer.getStorageManager().addDeleteChunkNo(msg_dreply.getFileId(),msg_dreply.getNumChunks());
     }
 }

@@ -2,14 +2,13 @@ package base.messages;
 
 import base.Clauses;
 
-import java.io.UnsupportedEncodingException;
 
 public class Message extends BaseMessage {
 
     protected String FileId;
 
-    public Message(String v, String ty, int sid, String fid) {
-        super(v, ty, sid);
+    public Message(String ty, int sid, String fid) {
+        super(ty, sid);
         FileId = fid;
     }
 
@@ -22,25 +21,5 @@ public class Message extends BaseMessage {
         return FileId;
     }
 
-    public String createMessage() {
-        String response;
-        response = super.createMessage() + FileId;
-        return response;
-    }
 
-    public String createMessageFinal() {
-        String response;
-        response = createMessage() + Clauses.CRLF + Clauses.CRLF;
-        return response;
-    }
-
-    @Override
-    public byte[] toByteArray() {
-        return this.createMessage().getBytes();
-    }
-
-    @Override
-    public byte[] toByteArrayFinal() {
-        return this.createMessageFinal().getBytes();
-    }
 }

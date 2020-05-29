@@ -6,13 +6,8 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
-import static base.Clauses.ENHANCED_VERSION;
-import static base.Clauses.VANILLA_VERSION;
-
 public class PeerInitial {
 
-
-    static String protocol_vs;
     static int s_id;
 
     static Registry registry;
@@ -20,28 +15,28 @@ public class PeerInitial {
 
     static int port;
 
+    static String knownPeerIP;
+    static int knownPeerPort;
+
     static Peer obj;
 
     public static void main(String[] args) throws IOException {
-        if (args.length != 4) {
-            System.out.println("Invalid arguments. Please use: java PeerInitial <version> <peer_id> <remote_name> <port>");
+        if (args.length != 3 && args.length != 5) {
+            System.out.println("Invalid arguments. Please use: java PeerInitial <peer_id> <remote_name> <port>\nOr java PeerInitial <version> <peer_id> <remote_name> <port> <knownPeerIP> <knownPeerPort>");
             System.exit(1);
         }
 
-        if (!(args[0].equals(VANILLA_VERSION) || args[0].equals(ENHANCED_VERSION))) {
-            System.out.println("Invalid version of the peers userd. Use one of the following:\n - Vanilla version: 1.0\n - Enhanced version: 2.0");
-            System.exit(1);
-        }
+        s_id = Integer.parseInt(args[0]);
+        remote_name = args[1];
+        port = Integer.parseInt(args[2]);
 
-        protocol_vs = args[0];
-        s_id = Integer.parseInt(args[1]);
-        remote_name = args[2];
-        port = Integer.parseInt(args[3]);
-
-        obj = new Peer(protocol_vs, s_id, port);
+        if (args.length == 5) {
+            knownPeerIP = args[3];
+            knownPeerPort = Integer.parseInt(args[4]);
+            obj = new Peer(s_id, port, knownPeerIP, knownPeerPort);
+        } else obj = new Peer(s_id, port);
 
         open();
-
     }
 
     public static void open() throws RemoteException {

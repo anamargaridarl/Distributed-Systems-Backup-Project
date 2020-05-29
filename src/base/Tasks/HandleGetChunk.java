@@ -35,7 +35,7 @@ public class HandleGetChunk implements Runnable {
         try {
             body = Peer.getStorageManager().getChunkData(getchunk_message.getFileId(), getchunk_message.getNumber());
             num_chunks = Peer.getStorageManager().getNumChunk(getchunk_message.getFileId(), getchunk_message.getNumber());
-            Peer.getTaskManager().schedule(new ManageChunk(getchunk_message.getVersion(), Peer.getID(), getchunk_message.getFileId(), getchunk_message.getNumber(), num_chunks, body, client_socket)
+            Peer.getTaskManager().schedule(new ManageChunk(Peer.getID(), getchunk_message.getFileId(), getchunk_message.getNumber(), num_chunks, body, client_socket)
                     , 500, TimeUnit.MILLISECONDS);
         } catch (IOException e) {
             InetSocketAddress inetSocketAddress = null;
@@ -49,14 +49,14 @@ public class HandleGetChunk implements Runnable {
                         return;
                     }
                     SSLSocket socket = createSocket(inetSocketAddress);
-                    Peer.getTaskManager().execute(new ManageForwardGet(getchunk_message.getVersion(), Peer.getID(), getchunk_message.getFileId(), getchunk_message.getNumber(), socket));
+                    Peer.getTaskManager().execute(new ManageForwardGet(Peer.getID(), getchunk_message.getFileId(), getchunk_message.getNumber(), socket));
                     Peer.getTaskManager().schedule(this, 500, TimeUnit.MILLISECONDS);
                 } catch (IOException a) {
                     a.printStackTrace();
 
                 }
             } else {
-                Peer.getTaskManager().execute(new ManageInfoToInitiator(getchunk_message.getVersion(), getchunk_message.getSenderId(), getchunk_message.getFileId(), getchunk_message.getNumber(), info, client_socket));
+                Peer.getTaskManager().execute(new ManageInfoToInitiator(getchunk_message.getSenderId(), getchunk_message.getFileId(), getchunk_message.getNumber(), info, client_socket));
             }
         }
 
