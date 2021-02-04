@@ -1,6 +1,6 @@
-# MIEIC_SDIS_2019_PROJ
+# Distributed-Systems-Backup-Project
 
-Assignments made in SDIS (Distributed Systems) course.
+Assignments made in Distributed Systems (SDIS) course.
 
 ## First Assignment
 
